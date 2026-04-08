@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/Backend/api/index.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/Frontend/$1"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/Frontend/",
+      "permanent": true
+    }
+  ]
+}

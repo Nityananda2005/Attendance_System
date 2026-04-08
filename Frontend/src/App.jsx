@@ -1,0 +1,44 @@
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './auth/Login'
+import Register from './auth/Register'
+import Dashboard from './pages/student/Dashboard'
+import MarkAttendance from './pages/student/MarkAttendance'
+import History from './pages/student/History'
+import Profile from './pages/student/Profile'
+import FacultyDashboard from './pages/faculty/FacultyDashboard'
+import CreateSession from './pages/faculty/CreateSession'
+import AttendanceList from './pages/faculty/AttendanceList'
+import SplashPage from './pages/splaspage'
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Toaster position="top-right" />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<SplashPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Student Protected Routes */}
+          <Route path="/dashboard" element={<ProtectedRoute allowedRole="student"><Dashboard /></ProtectedRoute>} />
+          <Route path="/mark-attendance" element={<ProtectedRoute allowedRole="student"><MarkAttendance /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute allowedRole="student"><History /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute allowedRole="student"><Profile /></ProtectedRoute>} />
+
+          {/* Faculty Protected Routes */}
+          <Route path="/faculty-dashboard" element={<ProtectedRoute allowedRole="faculty"><FacultyDashboard /></ProtectedRoute>} />
+          <Route path="/create-session" element={<ProtectedRoute allowedRole="faculty"><CreateSession /></ProtectedRoute>} />
+          <Route path="/attendance-list" element={<ProtectedRoute allowedRole="faculty"><AttendanceList /></ProtectedRoute>} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  )
+}
+
+export default App
