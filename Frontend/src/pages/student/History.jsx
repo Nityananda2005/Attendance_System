@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import StudentLayout from '../../components/StudentLayout';
 import api from '../../api/axios';
+import { AuthContext } from '../../context/AuthContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { 
   Download, FileText, CheckCircle2, CalendarDays,
   XCircle, Search, ChevronDown, Filter, Clock
@@ -15,6 +18,7 @@ const History = () => {
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchHistoryData = async () => {
@@ -40,6 +44,164 @@ const History = () => {
     r.sessionId?.topic?.toLowerCase().includes(search.toLowerCase())
   );
 
+  // ─── PDF Download ────────────────────────────────────────────────
+  const handleDownloadPDF = () => {
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const now = new Date();
+
+      // ── Blue header ──
+      doc.setFillColor(37, 99, 235);
+      doc.rect(0, 0, pageWidth, 28, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('Attendify', 14, 13);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Official Attendance Report', 14, 22);
+      doc.text(
+        `Generated: ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+        pageWidth - 14, 22, { align: 'right' }
+      );
+
+      // ── Student info ──
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text(`${user?.name || 'Student'}`, 14, 40);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Email: ${user?.email || 'N/A'}`, 14, 47);
+      doc.text(
+        `Department: ${user?.department || 'N/A'}   Semester: ${user?.semester || 'N/A'}`,
+        14, 53
+      );
+
+      // ── Horizontal line ──
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.4);
+      doc.line(14, 58, pageWidth - 14, 58);
+
+      // ── Stats row (plain rects — no roundedRect) ──
+      const stats = [
+        { label: 'Attendance Rate', value: `${analytics.overallAttendanceRate}%` },
+        { label: 'Total Sessions',  value: `${analytics.totalSessions}` },
+        { label: 'Present Days',    value: `${analytics.totalPresentDays}` },
+        { label: 'Absent Days',     value: `${absentDays}` },
+      ];
+      const boxW = (pageWidth - 28 - 9) / 4;
+      const boxY = 62;
+      stats.forEach((s, i) => {
+        const x = 14 + i * (boxW + 3);
+        // background
+        doc.setFillColor(239, 246, 255);
+        doc.rect(x, boxY, boxW, 18, 'F');
+        // border
+        doc.setDrawColor(191, 219, 254);
+        doc.setLineWidth(0.3);
+        doc.rect(x, boxY, boxW, 18);
+        // value
+        doc.setTextColor(37, 99, 235);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text(s.value, x + boxW / 2, boxY + 10, { align: 'center' });
+        // label
+        doc.setTextColor(100, 116, 139);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.text(s.label, x + boxW / 2, boxY + 16, { align: 'center' });
+      });
+
+      // ── Attendance table ──
+      const tableRows = historyList.map((r, idx) => [
+        `${idx + 1}`,
+        r.sessionId?.courseName || '-',
+        r.sessionId?.topic || '-',
+        r.sessionId?.facultyId?.name || 'Unknown',
+        new Date(r.markedAt).toLocaleDateString(),
+        new Date(r.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        'Present',
+      ]);
+
+      autoTable(doc, {
+        startY: 86,
+        head: [['#', 'Course', 'Topic', 'Faculty', 'Date', 'Time', 'Status']],
+        body: tableRows,
+        styles: {
+          fontSize: 8.5,
+          cellPadding: 3.5,
+          font: 'helvetica',
+          textColor: [30, 41, 59],
+        },
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: 255,
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 8.5,
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 10 },
+          4: { halign: 'center' },
+          5: { halign: 'center' },
+          6: { halign: 'center', textColor: [22, 163, 74], fontStyle: 'bold' },
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14, bottom: 18 },
+      });
+
+      // ── Page footers (loop after all pages rendered) ──
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFontSize(7.5);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+          `Page ${p} of ${totalPages}  \u2022  \u00a9 2026 Attendify College Solutions`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 8,
+          { align: 'center' }
+        );
+      }
+
+      // ── Save ──
+      const safeName = (user?.name || 'Student').replace(/\s+/g, '_');
+      const dateStr = now.toISOString().slice(0, 10);
+      doc.save(`Attendance_Report_${safeName}_${dateStr}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      import('react-hot-toast').then(({ toast }) => toast.error('PDF generation failed. Please try again.'));
+    }
+  };
+
+  // ─── CSV Download ────────────────────────────────────────────────
+  const handleDownloadCSV = () => {
+    const header = ['#', 'Course', 'Topic', 'Faculty', 'Date', 'Time', 'Status'];
+    const rows = historyList.map((r, i) => [
+      i + 1,
+      `"${r.sessionId?.courseName || ''}"`,
+      `"${r.sessionId?.topic || ''}"`,
+      `"${r.sessionId?.facultyId?.name || 'Unknown'}"`,
+      new Date(r.markedAt).toLocaleDateString(),
+      new Date(r.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      'Present',
+    ]);
+    const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Attendance_${user?.name?.replace(/\s+/g, '_') || 'Student'}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <StudentLayout title="Attendance History">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
@@ -51,11 +213,18 @@ const History = () => {
             <p className="text-[13px] sm:text-[14px] text-gray-500 mt-0.5 font-medium">Review your academic attendance records.</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-xl text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
+            <button
+              onClick={handleDownloadCSV}
+              disabled={historyList.length === 0}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-xl text-[12px] font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
               <span className="hidden sm:inline">Export CSV</span>
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-xl text-[12px] font-semibold text-white transition-all shadow-sm">
+            <button
+              disabled
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-300 rounded-xl text-[12px] font-semibold text-white cursor-not-allowed opacity-50 shadow-sm"
+            >
               <FileText className="w-3.5 h-3.5" strokeWidth={2.5} />
               <span className="hidden sm:inline">PDF Report</span>
             </button>

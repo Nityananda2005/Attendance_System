@@ -1,17 +1,4 @@
 import React, { useState, useContext } from 'react';
-import { 
-  Activity, 
-  UserCircle2, 
-  Mail, 
-  Lock, 
-  CheckCircle2, 
-  ChevronDown, 
-  ArrowRight,
-  ArrowLeft,
-  User,
-  Briefcase,
-  ShieldCheck
-} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -24,26 +11,28 @@ const Register = () => {
   const [role, setRole] = useState('student');
   const [department, setDepartment] = useState('');
   const [semester, setSemester] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { registerAction } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      return toast.error("Passwords do not match");
+      return toast.error('Passwords do not match');
     }
+    setLoading(true);
     try {
       const userData = await registerAction({
         name,
         email,
         password,
-        password,
-        role: role,
-        ...(role === 'student' && { 
+        role,
+        ...(role === 'student' && {
           enrollmentId: Math.random().toString(36).substring(7).toUpperCase(),
           department,
-          semester
-        })
+          semester,
+        }),
       });
       if (userData.role === 'faculty') {
         navigate('/faculty-dashboard');
@@ -52,246 +41,225 @@ const Register = () => {
       }
     } catch (err) {
       // Handled by toast
+    } finally {
+      setLoading(false);
     }
   };
+
+  const inputStyle = {
+    width: '100%', paddingLeft: 42, paddingRight: 16, paddingTop: 12, paddingBottom: 12,
+    borderRadius: 12, border: '1.5px solid #e2e8f0',
+    fontSize: 14, color: '#0f172a', background: '#f8fafc',
+    outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box',
+    fontFamily: "'Inter', sans-serif", fontWeight: 500,
+  };
+  const inputFocus = (e) => { e.target.style.border = '1.5px solid #3b82f6'; e.target.style.background = 'white'; e.target.style.boxShadow = '0 0 0 4px rgba(59,130,246,0.08)'; };
+  const inputBlur = (e) => { e.target.style.border = '1.5px solid #e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none'; };
+
+  const IconWrap = ({ children }) => (
+    <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', display: 'flex' }}>
+      {children}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-[#f8fbff] flex flex-col items-center justify-center p-4 relative font-sans overflow-hidden">
-      
-      {/* Back Button */}
-      <button
-        onClick={() => navigate('/')}
-        className="absolute top-5 left-5 flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all z-20"
-      >
-        <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
-        Back
-      </button>
-      
-      {/* Background Watermark */}
-      <div className="fixed top-20 -left-64 opacity-[0.02] text-blue-500 pointer-events-none z-0">
-        <Activity className="w-[600px] h-[600px] text-blue-600" strokeWidth={1} />
-      </div>
+    <div style={{ fontFamily: "'Inter', sans-serif", minHeight: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
 
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-[500px] mx-auto z-10 py-10 pb-24">
-        
-        {/* Header section */}
-        <div className="flex flex-col items-center mb-8 relative z-10 w-full">
-          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 mb-5">
-            <Activity className="w-7 h-7 text-white" />
+      {/* Background */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        background: 'radial-gradient(ellipse 80% 60% at 60% 30%, #dbeafe 0%, #f0f9ff 40%, #ffffff 80%)',
+      }} />
+      <div style={{ position: 'absolute', zIndex: 0, pointerEvents: 'none', opacity: 0.35, width: 500, height: 220, borderRadius: '50%', background: '#bfdbfe', filter: 'blur(70px)', top: -60, right: -80 }} />
+      <div style={{ position: 'absolute', zIndex: 0, pointerEvents: 'none', opacity: 0.2, width: 300, height: 160, borderRadius: '50%', background: '#93c5fd', filter: 'blur(55px)', bottom: 0, left: 0 }} />
+
+      {/* Navbar */}
+      <nav style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', zIndex: 10, boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(59,130,246,0.35)' }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <rect x="3" y="3" width="10" height="2" rx="1" fill="white" />
+              <rect x="3" y="7.5" width="7" height="2" rx="1" fill="white" />
+              <rect x="3" y="12" width="2" height="3" rx="1" fill="white" />
+            </svg>
           </div>
-          <h1 className="text-[26px] font-extrabold text-gray-900 mb-2 flex items-center gap-2">
-            Attendify
-          </h1>
-          <h2 className="text-2xl font-extrabold text-gray-900 mt-1 mb-2">Create your account</h2>
-          <p className="text-[13px] font-medium text-gray-500 text-center">
-            Join your college community and track your progress effortlessly.
-          </p>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', letterSpacing: '-0.3px' }}>Attendify</span>
         </div>
+        <button
+          onClick={() => navigate('/')}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 999, background: 'white', border: '1px solid #e2e8f0', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', transition: 'all 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#93c5fd'; e.currentTarget.style.color = '#2563eb'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#475569'; }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </button>
+      </nav>
 
-        {/* Main Card */}
-        <div className="bg-white w-full rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/60 p-7 sm:p-9 relative z-10">
-          
-          <form className="space-y-6" onSubmit={handleRegister}>
-            
-            {/* Personal Information Section */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <User className="w-[18px] h-[18px] text-blue-500" strokeWidth={2.5} />
-                <h3 className="text-[14px] font-bold text-gray-700">Personal Information</h3>
+      {/* Main Content */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10px 16px 40px', zIndex: 10 }}>
+        <div style={{ width: '100%', maxWidth: 480 }}>
+
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 999, padding: '5px 14px', marginBottom: 16 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3b82f6', display: 'inline-block' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', letterSpacing: '0.3px' }}>College Attendance System</span>
+            </div>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.6px', marginBottom: 6, lineHeight: 1.2 }}>
+              Create your <span style={{ color: '#2563eb' }}>Account</span>
+            </h1>
+            <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6, fontWeight: 450 }}>
+              Join your college community and track your progress effortlessly.
+            </p>
+          </div>
+
+          {/* Card */}
+          <div style={{ background: 'white', borderRadius: 24, padding: '28px 28px', boxShadow: '0 8px 40px rgba(59,130,246,0.08), 0 2px 8px rgba(0,0,0,0.04)', border: '1px solid rgba(219,234,254,0.8)' }}>
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Account Type */}
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>I am a...</p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {[
+                    { id: 'student', label: 'Student', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 14L2 9l10-5 10 5-10 5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><path d="M6 11.5V17c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg> },
+                    { id: 'faculty', label: 'Faculty', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="13" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M8 21h8M12 16v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg> },
+                  ].map(({ id, label, icon }) => (
+                    <button key={id} type="button" onClick={() => setRole(id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 16px', borderRadius: 12, cursor: 'pointer', border: role === id ? '2px solid #3b82f6' : '2px solid #e2e8f0', background: role === id ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' : 'white', color: role === id ? '#2563eb' : '#64748b', fontWeight: 700, fontSize: 14, transition: 'all 0.2s', boxShadow: role === id ? '0 2px 12px rgba(59,130,246,0.15)' : 'none' }}>
+                      {icon}{label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="h-px w-full bg-gray-100 mb-5"></div>
 
-              <div className="space-y-5">
-                {/* Full Name */}
+              {/* Divider */}
+              <div style={{ height: 1, background: '#f1f5f9' }} />
+
+              {/* Full Name */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 7 }}>Full Name</label>
+                <div style={{ position: 'relative' }}>
+                  <IconWrap>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  </IconWrap>
+                  <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Nityananda Dalei" style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 7 }}>College Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <IconWrap>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  </IconWrap>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="john.doe@college.edu" style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+                </div>
+              </div>
+
+              {/* Password Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label className="block text-[12px] font-bold text-gray-600 mb-2">Full Name</label>
-                  <div className="relative">
-                    <UserCircle2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                    <input 
-                      type="text" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      placeholder="e.g. Johnathan Doe" 
-                      className="w-full pl-10 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-[14px] text-gray-900 placeholder:text-gray-400 transition-all font-medium"
-                    />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 7 }}>Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <IconWrap>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M8 11V7a4 4 0 118 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                    </IconWrap>
+                    <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" style={{ ...inputStyle, paddingRight: 36 }} onFocus={inputFocus} onBlur={inputBlur} />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}>
+                      {showPassword
+                        ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                        : <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/></svg>
+                      }
+                    </button>
                   </div>
                 </div>
-
-                {/* College Email */}
                 <div>
-                  <label className="block text-[12px] font-bold text-gray-600 mb-2">College Email Address</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                    <input 
-                      type="email" 
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="john.doe@college.edu" 
-                      className="w-full pl-10 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-[14px] text-gray-900 placeholder:text-gray-400 transition-all font-medium"
-                    />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 7 }}>Confirm Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <IconWrap>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/></svg>
+                    </IconWrap>
+                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="••••••••" style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
                   </div>
                 </div>
+              </div>
 
-                {/* Password Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Student fields */}
+              {role === 'student' && (
+                <>
+                  <div style={{ height: 1, background: '#f1f5f9' }} />
                   <div>
-                    <label className="block text-[12px] font-bold text-gray-600 mb-2">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                      <input 
-                        type="password" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        placeholder="••••••••" 
-                        className="w-full pl-10 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-[14px] text-gray-900 placeholder:text-gray-400 transition-all font-medium"
-                      />
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Academic Info</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 7 }}>Department</label>
+                        <div style={{ position: 'relative' }}>
+                          <IconWrap>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M6 21V9M18 21V9M9 21v-6h6v6M3 9l9-6 9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </IconWrap>
+                          <input type="text" value={department} onChange={e => setDepartment(e.target.value)} required placeholder="e.g. CSE" style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 7 }}>Semester</label>
+                        <div style={{ position: 'relative' }}>
+                          <IconWrap>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                          </IconWrap>
+                          <input type="text" value={semester} onChange={e => setSemester(e.target.value)} required placeholder="e.g. 4th" style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-[12px] font-bold text-gray-600 mb-2">Confirm Password</label>
-                    <div className="relative">
-                      <CheckCircle2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                      <input 
-                        type="password" 
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        placeholder="••••••••" 
-                        className="w-full pl-10 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-[14px] text-gray-900 placeholder:text-gray-400 transition-all font-medium"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                </>
+              )}
 
-            {/* Academic Information (Student Only) */}
-            {role === 'student' && (
-              <div className="pt-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <Briefcase className="w-[18px] h-[18px] text-blue-500" strokeWidth={2.5} />
-                  <h3 className="text-[14px] font-bold text-gray-700">Academic Information</h3>
-                </div>
-                <div className="h-px w-full bg-gray-100 mb-5"></div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                  <div>
-                    <label className="block text-[12px] font-bold text-gray-600 mb-2">Department</label>
-                    <input 
-                      type="text" 
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      required
-                      placeholder="e.g. CS" 
-                      className="w-full px-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-[14px] text-gray-900 placeholder:text-gray-400 transition-all font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-bold text-gray-600 mb-2">Semester</label>
-                    <input 
-                      type="text" 
-                      value={semester}
-                      onChange={(e) => setSemester(e.target.value)}
-                      required
-                      placeholder="e.g. 4th" 
-                      className="w-full px-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-[14px] text-gray-900 placeholder:text-gray-400 transition-all font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Role Configuration Section */}
-            <div className="pt-2">
-              <div className="flex items-center gap-2 mb-3">
-                <ShieldCheck className="w-[18px] h-[18px] text-blue-500" strokeWidth={2.5} />
-                <h3 className="text-[14px] font-bold text-gray-700">Account Type</h3>
-              </div>
-              <div className="h-px w-full bg-gray-100 mb-5"></div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setRole('student')}
-                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                    role === 'student' ? 'border-blue-500 bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'
-                  }`}
-                >
-                  <UserCircle2 className={`w-6 h-6 mb-2 ${role === 'student' ? 'text-blue-500' : 'text-gray-400'}`} />
-                  <span className={`text-[13px] font-bold ${role === 'student' ? 'text-blue-600' : 'text-gray-500'}`}>Student</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('faculty')}
-                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                    role === 'faculty' ? 'border-blue-500 bg-blue-50/50' : 'border-gray-100 bg-white hover:border-gray-200'
-                  }`}
-                >
-                  <Briefcase className={`w-6 h-6 mb-2 ${role === 'faculty' ? 'text-blue-500' : 'text-gray-400'}`} />
-                  <span className={`text-[13px] font-bold ${role === 'faculty' ? 'text-blue-600' : 'text-gray-500'}`}>Faculty</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Terms and Submit */}
-            <div className="pt-2">
-              <div className="flex items-center gap-2.5 mb-5">
-                <div className="relative flex items-center justify-center">
-                  <input 
-                    type="checkbox" 
-                    id="terms" 
-                    className="w-[15px] h-[15px] rounded border-gray-300 text-blue-500 focus:ring-blue-500 cursor-pointer accent-blue-500 transition-all"
-                  />
-                </div>
-                <label htmlFor="terms" className="text-[12px] font-medium text-gray-500 select-none">
-                  I agree to the <Link to="/terms" className="font-bold text-blue-500 hover:text-blue-600 transition-colors">Terms of Service</Link> and <Link to="/privacy" className="font-bold text-blue-500 hover:text-blue-600 transition-colors">Privacy Policy</Link>.
-                </label>
-              </div>
-
-              <button 
-                type="submit" 
-                className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-3.5 rounded-full flex items-center justify-center gap-2 transition-all duration-200 shadow-sm group"
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ width: '100%', padding: '14px', borderRadius: 999, background: loading ? '#93c5fd' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', fontSize: 15, fontWeight: 700, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 6px 20px rgba(59,130,246,0.4)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}
+                onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(59,130,246,0.5)'; } }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(59,130,246,0.4)'; }}
               >
-                Create Account
-                <ArrowRight className="w-4 h-4 text-white/90 group-hover:translate-x-0.5 transition-transform" />
+                {loading ? (
+                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}><circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/><path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>Creating Account...</>
+                ) : (
+                  <>Create Account <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg></>
+                )}
               </button>
-            </div>
-            
-            <div className="text-center mt-4">
-              <p className="text-[12px] text-gray-500 font-medium">
-                Already have an account? <Link to="/login" className="font-bold text-blue-500 hover:text-blue-600 transition-colors">Sign in here</Link>
+
+              <p style={{ textAlign: 'center', fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>
+                Already have an account?{' '}
+                <Link to="/login" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>Sign in here</Link>
               </p>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
 
-        {/* Password Requirements Pills */}
-        <div className="flex flex-wrap justify-center gap-2.5 mt-6 z-10 px-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200/80 bg-white/60 backdrop-blur-md shadow-sm text-gray-500">
-            <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-[10px] font-bold">Minimum 8 characters</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200/80 bg-white/60 backdrop-blur-md shadow-sm text-gray-500">
-            <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-[10px] font-bold">One uppercase letter</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200/80 bg-white/60 backdrop-blur-md shadow-sm text-gray-500">
-            <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-[10px] font-bold">One special character</span>
+          {/* Trust badges */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 20, marginBottom: 8 }}>
+            {[{ icon: '🔒', label: 'Secure' }, { icon: '📍', label: 'GPS Verified' }, { icon: '⚡', label: 'Real-time' }].map(({ icon, label }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
+                <span>{icon}</span><span>{label}</span>
+              </div>
+            ))}
           </div>
         </div>
-
       </div>
 
-      {/* Page Base Footer */}
-      <div className="absolute bottom-0 left-0 w-full border-t border-gray-200/80 bg-white/50 backdrop-blur-sm py-5 px-4 z-0">
-        <p className="text-[12px] font-medium text-gray-500 text-center">
-          © 2026 Attendify College Solutions. All rights reserved.
-        </p>
+      {/* Footer */}
+      <div style={{ textAlign: 'center', padding: '16px', borderTop: '1px solid rgba(226,232,240,0.8)', background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(8px)', zIndex: 10 }}>
+        <p style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>© 2026 Attendify College Solutions. All rights reserved.</p>
       </div>
 
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };
