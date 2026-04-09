@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import { toast } from 'react-hot-toast';
 
 const Login = () => {
@@ -9,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { theme } = useContext(ThemeContext);
   const { loginAction, logoutAction } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -40,7 +42,7 @@ const Login = () => {
       {/* Background */}
       <div style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background: 'radial-gradient(ellipse 80% 60% at 60% 30%, #dbeafe 0%, #f0f9ff 40%, #ffffff 80%)',
+        background: theme === 'dark' ? 'radial-gradient(ellipse 80% 60% at 60% 30%, #0f172a 0%, #1e293b 40%, #020617 80%)' : 'radial-gradient(ellipse 80% 60% at 60% 30%, #dbeafe 0%, #f0f9ff 40%, #ffffff 80%)',
       }} />
 
       {/* Blob top-right */}
@@ -73,14 +75,14 @@ const Login = () => {
               <rect x="3" y="12" width="2" height="3" rx="1" fill="white" />
             </svg>
           </div>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#1e293b', letterSpacing: '-0.3px' }}>Attendify</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: theme === 'dark' ? '#f8fafc' : '#1e293b', letterSpacing: '-0.3px' }}>Attendify</span>
         </div>
         <button
           onClick={() => navigate('/')}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 18px', borderRadius: 999,
-            background: 'white', border: '1px solid #e2e8f0',
+            background: theme === 'dark' ? '#0f172a' : 'white', border: '1px solid #e2e8f0',
             fontSize: 13, fontWeight: 600, color: '#475569',
             cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
             transition: 'all 0.2s',
@@ -111,20 +113,20 @@ const Login = () => {
               <span style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', letterSpacing: '0.3px' }}>Secure Student Portal</span>
             </div>
 
-            <h1 style={{ fontSize: 30, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.8px', marginBottom: 8, lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: 30, fontWeight: 800, color: theme === 'dark' ? '#f8fafc' : '#0f172a', letterSpacing: '-0.8px', marginBottom: 8, lineHeight: 1.2 }}>
               Welcome <span style={{ color: '#2563eb' }}>Back</span>
             </h1>
-            <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6, fontWeight: 450 }}>
+            <p style={{ fontSize: 14, color: theme === 'dark' ? '#cbd5e1' : '#64748b', lineHeight: 1.6, fontWeight: 450 }}>
               Sign in to access your attendance dashboard
             </p>
           </div>
 
           {/* Card */}
           <div style={{
-            background: 'white', borderRadius: 24,
+            background: theme === 'dark' ? '#0f172a' : 'white', borderRadius: 24,
             padding: '32px 32px',
             boxShadow: '0 8px 40px rgba(59,130,246,0.08), 0 2px 8px rgba(0,0,0,0.04)',
-            border: '1px solid rgba(219,234,254,0.8)',
+            border: theme === 'dark' ? '1px solid rgba(51,65,85,0.8)' : '1px solid rgba(219,234,254,0.8)',
           }}>
 
             {/* Role Selector */}
@@ -153,8 +155,8 @@ const Login = () => {
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       padding: '12px 16px', borderRadius: 14, cursor: 'pointer',
                       border: role === id ? '2px solid #3b82f6' : '2px solid #e2e8f0',
-                      background: role === id ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' : 'white',
-                      color: role === id ? '#2563eb' : '#64748b',
+                      background: role === id ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : (theme === 'dark' ? '#0f172a' : 'white'),
+                      color: role === id ? '#ffffff' : (theme === 'dark' ? '#cbd5e1' : '#64748b'),
                       fontWeight: 700, fontSize: 14,
                       transition: 'all 0.2s',
                       boxShadow: role === id ? '0 2px 12px rgba(59,130,246,0.15)' : 'none',
@@ -171,7 +173,7 @@ const Login = () => {
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               {/* Email */}
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 8 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 8 }}>
                   Campus Email
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -189,13 +191,13 @@ const Login = () => {
                     placeholder="john.doe@college.edu"
                     style={{
                       width: '100%', paddingLeft: 42, paddingRight: 16, paddingTop: 13, paddingBottom: 13,
-                      borderRadius: 14, border: '1.5px solid #e2e8f0',
-                      fontSize: 14, color: '#0f172a', background: '#f8fafc',
+                      borderRadius: 14, border: theme === 'dark' ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                      fontSize: 14, color: theme === 'dark' ? '#f8fafc' : '#0f172a', background: theme === 'dark' ? '#1e293b' : '#f8fafc',
                       outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box',
                       fontFamily: "'Inter', sans-serif", fontWeight: 500,
                     }}
-                    onFocus={e => { e.target.style.border = '1.5px solid #3b82f6'; e.target.style.background = 'white'; e.target.style.boxShadow = '0 0 0 4px rgba(59,130,246,0.08)'; }}
-                    onBlur={e => { e.target.style.border = '1.5px solid #e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none'; }}
+                    onFocus={e => { e.target.style.border = '1.5px solid #3b82f6'; e.target.style.background = (theme === 'dark' ? '#0f172a' : 'white'); e.target.style.boxShadow = '0 0 0 4px rgba(59,130,246,0.08)'; }}
+                    onBlur={e => { e.target.style.border = (theme === 'dark' ? '1.5px solid #334155' : '1.5px solid #e2e8f0'); e.target.style.background = (theme === 'dark' ? '#1e293b' : '#f8fafc'); e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
               </div>
@@ -203,7 +205,7 @@ const Login = () => {
               {/* Password */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>Password</label>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151' }}>Password</label>
                   <Link to="/forgot-password" style={{ fontSize: 12, fontWeight: 600, color: '#3b82f6', textDecoration: 'none' }}>
                     Forgot password?
                   </Link>
@@ -223,13 +225,13 @@ const Login = () => {
                     placeholder="••••••••"
                     style={{
                       width: '100%', paddingLeft: 42, paddingRight: 44, paddingTop: 13, paddingBottom: 13,
-                      borderRadius: 14, border: '1.5px solid #e2e8f0',
-                      fontSize: 14, color: '#0f172a', background: '#f8fafc',
+                      borderRadius: 14, border: theme === 'dark' ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                      fontSize: 14, color: theme === 'dark' ? '#f8fafc' : '#0f172a', background: theme === 'dark' ? '#1e293b' : '#f8fafc',
                       outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box',
                       fontFamily: "'Inter', sans-serif", fontWeight: 500,
                     }}
-                    onFocus={e => { e.target.style.border = '1.5px solid #3b82f6'; e.target.style.background = 'white'; e.target.style.boxShadow = '0 0 0 4px rgba(59,130,246,0.08)'; }}
-                    onBlur={e => { e.target.style.border = '1.5px solid #e2e8f0'; e.target.style.background = '#f8fafc'; e.target.style.boxShadow = 'none'; }}
+                    onFocus={e => { e.target.style.border = '1.5px solid #3b82f6'; e.target.style.background = (theme === 'dark' ? '#0f172a' : 'white'); e.target.style.boxShadow = '0 0 0 4px rgba(59,130,246,0.08)'; }}
+                    onBlur={e => { e.target.style.border = (theme === 'dark' ? '1.5px solid #334155' : '1.5px solid #e2e8f0'); e.target.style.background = (theme === 'dark' ? '#1e293b' : '#f8fafc'); e.target.style.boxShadow = 'none'; }}
                   />
                   <button
                     type="button"
@@ -300,14 +302,14 @@ const Login = () => {
                 type="button"
                 style={{
                   width: '100%', padding: '13px',
-                  borderRadius: 999, background: 'white',
-                  border: '1.5px solid #e2e8f0',
-                  fontSize: 14, fontWeight: 700, color: '#374151',
+                  borderRadius: 999, background: theme === 'dark' ? '#0f172a' : 'white',
+                  border: theme === 'dark' ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                  fontSize: 14, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151',
                   cursor: 'pointer', transition: 'all 0.2s',
                   boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#93c5fd'; e.currentTarget.style.color = '#2563eb'; e.currentTarget.style.background = '#f8faff'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#374151'; e.currentTarget.style.background = 'white'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#374151'; e.currentTarget.style.background = (theme === 'dark' ? '#0f172a' : 'white'); }}
               >
                 Create an Account
               </button>

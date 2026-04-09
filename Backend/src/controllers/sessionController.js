@@ -1,4 +1,5 @@
 import Session from "../models/Session.js";
+import Attendance from "../models/Attendance.js";
 import crypto from "crypto";
 
 // @desc    Create a new session (Faculty only)
@@ -106,6 +107,23 @@ export const closeSession = async (req, res) => {
     await session.save();
 
     res.json({ message: "Session closed successfully", session });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete all sessions and history for a faculty
+// @route   DELETE /api/sessions/faculty/all
+// @access  Private/Faculty
+export const deleteAllFacultySessions = async (req, res) => {
+  try {
+    const sessions = await Session.find({ facultyId: req.user._id });
+    const sessionIds = sessions.map(s => s._id);
+
+    await Attendance.deleteMany({ sessionId: { $in: sessionIds } });
+    await Session.deleteMany({ facultyId: req.user._id });
+
+    res.json({ message: "All history data deleted securely" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -33,7 +33,7 @@ export const registerUser = async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      enrollmentId: role === "student" ? enrollmentId : undefined,
+      enrollmentId: role === "student" && enrollmentId?.trim() ? enrollmentId.trim() : undefined,
     });
 
     if (user) {
@@ -56,6 +56,10 @@ export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please provide email and password" });
+    }
+
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {

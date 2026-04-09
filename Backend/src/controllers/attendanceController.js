@@ -104,15 +104,51 @@ export const getSessionAttendance = async (req, res) => {
 // @access  Private/Student
 export const getStudentHistory = async (req, res) => {
   try {
-    const history = await Attendance.find({ studentId: req.user._id })
+    const studentId = req.user._id;
+    const { department, semester } = req.user;
+
+    const attendedRecords = await Attendance.find({ studentId })
       .populate({
         path: "sessionId",
         select: "courseId courseName topic sessionCode createdAt status location radiusAllowed",
         populate: { path: "facultyId", select: "name" }
-      })
-      .sort({ createdAt: -1 });
+      });
 
-    res.json(history);
+    const attendedCourseIds = [...new Set(attendedRecords.map(r => r.sessionId?.courseId).filter(Boolean))];
+
+    // As requested: EVERY created session globally is tracked for every student
+    let allExpectedSessions = await Session.find({}).populate({ path: "facultyId", select: "name" });
+
+    const historyList = [];
+    const attendedMapping = {};
+    attendedRecords.forEach(record => {
+       if (record.sessionId && record.sessionId._id) {
+          attendedMapping[record.sessionId._id.toString()] = record;
+       }
+    });
+
+    allExpectedSessions.forEach(session => {
+       const record = attendedMapping[session._id.toString()];
+       if (record) {
+          historyList.push({
+             _id: record._id,
+             sessionId: session,
+             markedAt: record.createdAt,
+             status: 'Present'
+          });
+       } else if (session.status === 'completed') {
+          historyList.push({
+             _id: `absent_${session._id}`,
+             sessionId: session,
+             markedAt: null,
+             status: 'Absent'
+          });
+       }
+    });
+
+    historyList.sort((a, b) => new Date(b.sessionId?.createdAt) - new Date(a.sessionId?.createdAt));
+
+    res.json(historyList);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -126,26 +162,11 @@ export const getStudentAnalytics = async (req, res) => {
     const studentId = req.user._id;
     const { department, semester } = req.user;
 
-    // 1. Find all sessions that match the student's department and semester
-    // If these fields aren't set yet for old data, we might need a fallback
-    const sessionQuery = {
-       $or: [
-         { department, semester },
-         // Fallback for sessions created before this update (optional logic)
-         // { courseId: { $in: await getAttendedCourseIds(studentId) } }
-       ]
-    };
-
-    const allSessions = await Session.find({ department, semester });
     const attendedRecords = await Attendance.find({ studentId }).populate("sessionId");
-    
-    // Fallback: If no sessions found in department/semester, but student has attendance elsewhere
-    // This handles legacy data or cross-department courses
-    let finalSessions = allSessions;
-    if (allSessions.length === 0 && attendedRecords.length > 0) {
-      const attendedCourseIds = [...new Set(attendedRecords.map(r => r.sessionId?.courseId).filter(Boolean))];
-      finalSessions = await Session.find({ courseId: { $in: attendedCourseIds } });
-    }
+    const attendedCourseIds = [...new Set(attendedRecords.map(r => r.sessionId?.courseId).filter(Boolean))];
+
+    // As requested: EVERY created session globally is tracked for every student
+    let finalSessions = await Session.find({});
 
     if (finalSessions.length === 0) {
       return res.json({
@@ -156,8 +177,33 @@ export const getStudentAnalytics = async (req, res) => {
       });
     }
 
-    const totalSessions = finalSessions.length;
-    const totalPresentDays = attendedRecords.length;
+    // Count presence based on the new absent tracking rules
+    // Only 'completed' sessions count towards total if not attended. 
+    // Actually, all active AND completed sessions count towards total.
+    let totalSessions = 0;
+    let totalPresentDays = 0;
+    
+    // We already found all sessions. Attended ones are always present. 
+    // But what if they attended an active session? They are present.
+    totalSessions = finalSessions.length;
+    
+    // Attended mapping
+    const attendedMapping = {};
+    attendedRecords.forEach(record => {
+       if (record.sessionId && record.sessionId._id) {
+          attendedMapping[record.sessionId._id.toString()] = record;
+       }
+    });
+
+    finalSessions.forEach(session => {
+       if (attendedMapping[session._id.toString()]) {
+          totalPresentDays++;
+       } else if (session.status === 'active') {
+          // You could choose to exclude active sessions from 'Total' until ended.
+          // But to be consistent with historyList showing absent for ended:
+          // Let's keep it in totalSessions but they aren't marked present.
+       }
+    });
     const overallAttendanceRate = totalSessions > 0 ? Math.round((totalPresentDays / totalSessions) * 100) : 0;
 
     // Group sessions by course
@@ -198,3 +244,25 @@ export const getStudentAnalytics = async (req, res) => {
   }
 };
 
+// @desc    Delete an attendance record
+// @route   DELETE /api/attendance/:id
+// @access  Private/Faculty
+export const deleteAttendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.findById(req.params.id);
+    if (!attendance) {
+      return res.status(404).json({ message: "Attendance record not found" });
+    }
+
+    // Verify the faculty owns the session before deleting
+    const session = await Session.findById(attendance.sessionId);
+    if (!session || session.facultyId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to delete this record" });
+    }
+
+    await Attendance.findByIdAndDelete(req.params.id);
+    res.json({ message: "Attendance record deleted securely" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

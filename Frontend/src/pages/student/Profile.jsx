@@ -60,11 +60,11 @@ const Profile = () => {
           value={formData[name] !== undefined ? formData[name] : ''}
           onChange={handleChange}
           placeholder={`Enter ${label}...`}
-          className="w-full bg-white border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 outline-none transition-all"
+          className="w-full bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 dark:text-slate-200 outline-none transition-all"
         />
       );
     }
-    return <p className="text-[13px] font-bold text-gray-800">{value || 'Not specified'}</p>;
+    return <p className="text-[13px] font-bold text-gray-800 dark:text-slate-200">{value || 'Not specified'}</p>;
   };
 
   if (loading) {
@@ -84,8 +84,8 @@ const Profile = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Student Profile</h1>
-            <p className="text-[13px] text-gray-500 mt-0.5 font-medium">Manage your academic identity and personal information.</p>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Student Profile</h1>
+            <p className="text-[13px] text-gray-500 dark:text-slate-400 mt-0.5 font-medium">Manage your academic identity and personal information.</p>
           </div>
           {!isEditing ? (
             <button
@@ -99,7 +99,7 @@ const Profile = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsEditing(false)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-full text-[13px] font-bold text-gray-600 transition-all"
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-slate-700/50 hover:bg-gray-200 dark:bg-slate-700 rounded-full text-[13px] font-bold text-gray-600 dark:text-slate-400 transition-all"
               >
                 <X className="w-3.5 h-3.5" strokeWidth={2.5} /> Cancel
               </button>
@@ -118,11 +118,11 @@ const Profile = () => {
 
           {/* Left: Profile Card */}
           <div className="w-full lg:w-[300px] shrink-0 space-y-4">
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
               <div className="h-20 bg-linear-to-r from-blue-400 to-blue-600" />
               <div className="px-5 pb-5 flex flex-col items-center -mt-10">
                 <div className="relative mb-3">
-                  <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-sm">
+                  <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-200 dark:bg-slate-700 overflow-hidden shadow-sm">
                     <img
                       src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'Student')}&background=cbd5e1&color=334155&font-size=0.33`}
                       alt="Profile"
@@ -139,25 +139,25 @@ const Profile = () => {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Full Name"
-                      className="w-full text-center bg-white border border-blue-200 focus:border-blue-500 rounded-lg px-2 py-1 text-[15px] font-extrabold text-gray-900 outline-none mb-1"
+                      className="w-full text-center bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 rounded-lg px-2 py-1 text-[15px] font-extrabold text-gray-900 dark:text-white outline-none mb-1"
                     />
                   ) : (
-                    <h2 className="text-[18px] font-extrabold text-gray-900 tracking-tight">{profile.name}</h2>
+                    <h2 className="text-[18px] font-extrabold text-gray-900 dark:text-white tracking-tight">{profile.name}</h2>
                   )}
-                  <p className="text-[12px] text-gray-500 font-medium mt-0.5 truncate">{profile.email}</p>
+                  <p className="text-[12px] text-gray-500 dark:text-slate-400 font-medium mt-0.5 truncate">{profile.email}</p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2 mt-3">
-                  <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold uppercase tracking-wide">Active Student</span>
+                  <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wide">Active Student</span>
                 </div>
-                <div className="w-full h-px bg-gray-100 my-4" />
+                <div className="w-full h-px bg-gray-100 dark:bg-slate-700/50 my-4" />
                 <div className="w-full space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-gray-500 font-semibold">Student ID</span>
-                    <span className="text-[12px] text-gray-900 font-bold">{profile.enrollmentId || 'N/A'}</span>
+                    <span className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold">Student ID</span>
+                    <span className="text-[12px] text-gray-900 dark:text-white font-bold">{profile.enrollmentId || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-gray-500 font-semibold">Joined</span>
-                    <span className="text-[12px] text-gray-900 font-bold">
+                    <span className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold">Joined</span>
+                    <span className="text-[12px] text-gray-900 dark:text-white font-bold">
                       {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
@@ -166,8 +166,8 @@ const Profile = () => {
             </div>
 
             {/* Security */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-              <h3 className="text-[10px] font-extrabold text-gray-400 tracking-widest mb-3">SECURITY & ACCESS</h3>
+            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+              <h3 className="text-[10px] font-extrabold text-gray-400 dark:text-slate-500 tracking-widest mb-3">SECURITY & ACCESS</h3>
               <div className="space-y-1">
                 {[
                   { icon: ShieldCheck, label: 'Two-Factor Auth' },
@@ -176,10 +176,10 @@ const Profile = () => {
                 ].map(({ icon: Icon, label, danger }) => (
                   <button
                     key={label}
-                    className={`w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 rounded-xl transition-colors ${danger ? 'hover:bg-red-50' : ''}`}
+                    className={`w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 dark:bg-slate-800/50 rounded-xl transition-colors ${danger ? 'hover:bg-red-50 dark:bg-red-500/10' : ''}`}
                   >
-                    <Icon className={`w-4 h-4 ${danger ? 'text-red-500' : 'text-blue-500'}`} strokeWidth={2.5} />
-                    <span className={`text-[13px] font-bold ${danger ? 'text-red-500' : 'text-gray-700'}`}>{label}</span>
+                    <Icon className={`w-4 h-4 ${danger ? 'text-red-500' : 'text-blue-500 dark:text-blue-400'}`} strokeWidth={2.5} />
+                    <span className={`text-[13px] font-bold ${danger ? 'text-red-500' : 'text-gray-700 dark:text-slate-300'}`}>{label}</span>
                   </button>
                 ))}
               </div>
@@ -190,11 +190,11 @@ const Profile = () => {
           <div className="flex-1 space-y-4 min-w-0">
 
             {/* Academic Info */}
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
               <div className="p-5 sm:p-6">
                 <div className="flex items-center gap-2.5 mb-5">
-                  <BookOpen className="w-5 h-5 text-blue-500" strokeWidth={2.5} />
-                  <h3 className="text-[16px] font-extrabold text-gray-900">Academic Information</h3>
+                  <BookOpen className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
+                  <h3 className="text-[16px] font-extrabold text-gray-900 dark:text-white">Academic Information</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                   {[
@@ -204,13 +204,13 @@ const Profile = () => {
                     { icon: Hash, label: 'ENROLLMENT NUMBER', value: profile.enrollmentId, fixed: true },
                   ].map(({ icon: Icon, label, name, value, fixed }) => (
                     <div key={label} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
-                        <Icon className="w-4 h-4 text-blue-500" strokeWidth={2} />
+                      <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <Icon className="w-4 h-4 text-blue-500 dark:text-blue-400" strokeWidth={2} />
                       </div>
                       <div className="w-full min-w-0">
-                        <p className="text-[9px] font-extrabold text-gray-400 tracking-widest mb-1 uppercase">{label}</p>
+                        <p className="text-[9px] font-extrabold text-gray-400 dark:text-slate-500 tracking-widest mb-1 uppercase">{label}</p>
                         {fixed
-                          ? <p className="text-[13px] font-bold text-gray-800">{value || 'N/A'}</p>
+                          ? <p className="text-[13px] font-bold text-gray-800 dark:text-slate-200">{value || 'N/A'}</p>
                           : renderField(name, value, label)}
                       </div>
                     </div>
@@ -220,15 +220,15 @@ const Profile = () => {
             </div>
 
             {/* Contact */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-6 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 sm:p-6 shadow-sm">
               <div className="flex items-center gap-2.5 mb-5">
-                <Mail className="w-5 h-5 text-blue-500" strokeWidth={2.5} />
-                <h3 className="text-[16px] font-extrabold text-gray-900">Personal & Contact Details</h3>
+                <Mail className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
+                <h3 className="text-[16px] font-extrabold text-gray-900 dark:text-white">Personal & Contact Details</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <p className="text-[9px] font-extrabold text-gray-400 tracking-widest mb-2 uppercase">University Email</p>
-                  <div className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-[13px] font-bold text-gray-700 truncate">
+                  <p className="text-[9px] font-extrabold text-gray-400 dark:text-slate-500 tracking-widest mb-2 uppercase">University Email</p>
+                  <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2.5 text-[13px] font-bold text-gray-700 dark:text-slate-300 truncate">
                     {profile.email}
                   </div>
                 </div>
@@ -238,8 +238,8 @@ const Profile = () => {
                   { name: 'emergencyContact', value: profile.emergencyContact, label: 'EMERGENCY CONTACT' },
                 ].map(({ name, value, label }) => (
                   <div key={name}>
-                    <p className="text-[9px] font-extrabold text-gray-400 tracking-widest mb-2 uppercase">{label}</p>
-                    <div className="bg-gray-50/80 border border-gray-100 rounded-xl px-3 py-2.5">
+                    <p className="text-[9px] font-extrabold text-gray-400 dark:text-slate-500 tracking-widest mb-2 uppercase">{label}</p>
+                    <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-xl px-3 py-2.5">
                       {renderField(name, value, label)}
                     </div>
                   </div>
@@ -250,17 +250,17 @@ const Profile = () => {
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { icon: CheckCircle2, value: '--', label: 'Avg Attendance', bg: 'bg-green-50', color: 'text-green-500' },
-                { icon: Award, value: '--', label: 'Academic Rank', bg: 'bg-orange-50', color: 'text-orange-500' },
-                { icon: Book, value: '--', label: 'Course Credits', bg: 'bg-blue-50', color: 'text-blue-500' },
+                { icon: CheckCircle2, value: '--', label: 'Avg Attendance', bg: 'bg-green-50 dark:bg-green-500/10', color: 'text-green-500' },
+                { icon: Award, value: '--', label: 'Academic Rank', bg: 'bg-orange-50 dark:bg-orange-500/10', color: 'text-orange-500' },
+                { icon: Book, value: '--', label: 'Course Credits', bg: 'bg-blue-50 dark:bg-blue-500/10', color: 'text-blue-500 dark:text-blue-400' },
               ].map(({ icon: Icon, value, label, bg, color }) => (
-                <div key={label} className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 shadow-sm flex items-center gap-2.5">
+                <div key={label} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-3 sm:p-4 shadow-sm flex items-center gap-2.5">
                   <div className={`w-8 h-8 rounded-full ${bg} flex items-center justify-center shrink-0`}>
                     <Icon className={`w-4 h-4 ${color}`} strokeWidth={2.5} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-[16px] sm:text-[18px] font-black text-gray-900 leading-none">{value}</h4>
-                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-wide leading-tight">{label}</p>
+                    <h4 className="text-[16px] sm:text-[18px] font-black text-gray-900 dark:text-white leading-none">{value}</h4>
+                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide leading-tight">{label}</p>
                   </div>
                 </div>
               ))}
@@ -269,8 +269,8 @@ const Profile = () => {
         </div>
 
         {/* Footer */}
-        <footer className="pt-8 pb-2 border-t border-gray-100 mt-8 flex items-center justify-center">
-          <p className="text-[11px] font-semibold text-gray-400">© 2026 Attendify College Solutions. All rights reserved.</p>
+        <footer className="pt-8 pb-2 border-t border-gray-100 dark:border-slate-700 mt-8 flex items-center justify-center">
+          <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500">© 2026 Attendify College Solutions. All rights reserved.</p>
         </footer>
       </div>
     </StudentLayout>
