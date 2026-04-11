@@ -197,7 +197,7 @@ const FacultyDashboard = () => {
 
             {/* Top Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
+              <div className="glass-card-3d p-5 relative overflow-hidden">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-[42px] h-[42px] rounded-full bg-blue-50 dark:bg-blue-500/10/80 flex items-center justify-center">
                     <Users className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
@@ -209,7 +209,7 @@ const FacultyDashboard = () => {
                 <p className="text-[12px] font-semibold text-gray-400 dark:text-slate-500">Across {uniqueCourses} unique courses</p>
               </div>
 
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
+              <div className="glass-card-3d p-5 relative overflow-hidden">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-[42px] h-[42px] rounded-full bg-blue-50 dark:bg-blue-500/10/80 flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
@@ -220,7 +220,7 @@ const FacultyDashboard = () => {
                 <p className="text-[12px] font-semibold text-gray-400 dark:text-slate-500">Computed via capacity</p>
               </div>
 
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
+              <div className="glass-card-3d p-5 relative overflow-hidden">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-[42px] h-[42px] rounded-full bg-blue-50 dark:bg-blue-500/10/80 flex items-center justify-center">
                     <Clock className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
@@ -231,7 +231,7 @@ const FacultyDashboard = () => {
                 <p className="text-[12px] font-semibold text-gray-400 dark:text-slate-500">Sessions waiting for end</p>
               </div>
 
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
+              <div className="glass-card-3d p-5 relative overflow-hidden">
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-[42px] h-[42px] rounded-full bg-blue-50 dark:bg-blue-500/10/80 flex items-center justify-center">
                     <Activity className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
@@ -248,7 +248,7 @@ const FacultyDashboard = () => {
               <div className="flex flex-col lg:flex-row gap-6">
                 
                 {/* Active Session Left */}
-                <div className="flex-1 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl p-7 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between">
+                <div className="flex-1 glass-panel rounded-3xl p-7 flex flex-col justify-between hover:shadow-[0_20px_50px_rgba(59,130,246,0.3)] transition-all duration-500">
                   <div>
                     <div className="flex items-center justify-between mb-8">
                       <div className="flex items-center gap-3.5">
@@ -287,7 +287,7 @@ const FacultyDashboard = () => {
                 </div>
 
                 {/* Quick Scan Right */}
-                <div className="w-full lg:w-[360px] shrink-0 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl p-7 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                <div className="w-full lg:w-[360px] shrink-0 glass-panel rounded-3xl p-7 hover:shadow-[0_20px_50px_rgba(59,130,246,0.3)] transition-all duration-500">
                   <div className="flex items-center justify-between mb-5">
                     <h3 className="text-[17px] font-extrabold text-gray-900 dark:text-white tracking-tight">Active Scan Point</h3>
                     <span className="px-2.5 py-1 bg-green-50 dark:bg-green-500/10 text-green-600 font-extrabold text-[10px] rounded-lg uppercase tracking-wider border border-green-200 shadow-sm">REAL QR</span>
@@ -326,7 +326,7 @@ const FacultyDashboard = () => {
 
             {/* Live Attendance Table */}
             {activeSession && (
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="glass-panel rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-500">
                 <div className="p-6 border-b border-gray-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-[17px] font-extrabold text-gray-900 dark:text-white mb-1 tracking-tight">Live Real-time Log</h3>

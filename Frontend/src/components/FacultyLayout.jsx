@@ -45,7 +45,7 @@ const FacultyLayout = ({ children }) => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] dark:bg-slate-900 font-sans overflow-hidden relative transition-colors duration-300">
+    <div className="flex h-screen bg-[#f8fafc] dark:bg-slate-950 font-sans overflow-hidden relative transition-colors duration-300 mesh-bg">
 
       {/* Mobile overlay */}
       {sidebarOpen && (

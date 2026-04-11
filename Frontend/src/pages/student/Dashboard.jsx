@@ -79,9 +79,9 @@ const Dashboard = () => {
           </div>
 
           {/* ── Overall Progress Card ── */}
-          <div className="glass-panel rounded-3xl p-6 sm:p-8 mb-5 relative overflow-hidden group">
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 mb-5 relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(59,130,246,0.3)] transition-all duration-500">
             <div className="absolute right-[-20%] top-[-50%] w-[80%] h-[150%] bg-gradient-to-l from-blue-500/10 via-cyan-400/5 to-transparent rounded-full blur-3xl opacity-50 pointer-events-none group-hover:opacity-70 transition-opacity duration-700" />
-            <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+            <div className="flex flex-col items-center gap-8 relative z-10">
               {/* Circular Progress */}
               <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -102,7 +102,7 @@ const Dashboard = () => {
               </div>
 
               {/* Info */}
-              <div className="flex-1 text-center sm:text-left z-10">
+              <div className="flex-1 text-center z-10">
                 <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white mb-1">
                   {overallRate >= 75 ? "You're on track! 🎉" : overallRate >= 50 ? "Needs Improvement" : "Critical Action Required!"}
                 </h2>
@@ -110,7 +110,7 @@ const Dashboard = () => {
                   You've attended <span className="text-gray-900 dark:text-white font-bold">{presentLogs}</span> out of{' '}
                   <span className="text-gray-900 dark:text-white font-bold">{totalClasses}</span> evaluated sessions.
                 </p>
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4">
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[12px] font-semibold border border-blue-100 dark:border-blue-500/20/50">
                     <TrendingUp className="w-3.5 h-3.5" /> Dynamic
                   </div>
@@ -137,7 +137,7 @@ const Dashboard = () => {
               { label: 'Streak', value: <span className="flex items-center gap-1 justify-center">{currentStreak} <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" /></span>, color: 'text-orange-500', border: 'border-orange-100 dark:border-orange-500/20', bg: 'bg-orange-50/50 dark:bg-orange-500/10' },
               { label: 'Total Logs', value: totalClasses, color: 'text-blue-500 dark:text-blue-400', border: 'border-blue-100 dark:border-blue-500/20', bg: 'bg-blue-50/50 dark:bg-blue-500/10' },
             ].map(({ label, value, color, border, bg }) => (
-              <div key={label} className={`glass-card p-4 text-center ${border} ${bg} hover:scale-[1.02] transition-transform`}>
+              <div key={label} className={`glass-card-3d p-4 text-center ${border} ${bg}`}>
                 <p className={`text-2xl sm:text-[28px] font-black ${color}`}>{value}</p>
                 <p className="text-[10px] sm:text-[11px] font-extrabold text-gray-500 dark:text-slate-400 uppercase tracking-widest mt-1">{label}</p>
               </div>
@@ -163,7 +163,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {analytics?.courseAttendance?.length > 0 ? (
                   analytics.courseAttendance.map((course, idx) => (
-                    <div key={idx} className="glass-card p-5 group hover:border-blue-500/30 dark:hover:border-blue-400/50 transition-all">
+                    <div key={idx} className="glass-card-3d p-5 group">
                       <div className="flex justify-between items-start mb-3">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${course.rate >= 75 ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400' : 'bg-red-50 dark:bg-red-500/10 text-red-500'}`}>
                           <Book className="w-4 h-4" />
@@ -230,7 +230,7 @@ const Dashboard = () => {
             <div className="space-y-4">
 
               {/* Recent Activity */}
-              <div className="glass-card p-6">
+              <div className="glass-card p-6 hover:shadow-xl transition-all duration-500">
                 <h3 className="text-[14px] font-black tracking-wide text-gray-800 dark:text-slate-200 flex items-center gap-2 mb-5 uppercase">
                   <History className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                   Recent Activity
@@ -297,7 +297,7 @@ const Dashboard = () => {
               )}
 
               {/* Support */}
-              <div className="glass-card p-5">
+              <div className="glass-card p-5 hover:shadow-xl transition-all duration-500">
                 <h4 className="text-[10px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-2">Academic Support</h4>
                 <p className="text-[12px] text-gray-500 dark:text-slate-400 font-medium mb-3 leading-relaxed">
                   Issues with attendance marking? Contact your department coordinator.

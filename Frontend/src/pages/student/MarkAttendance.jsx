@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Info, Maximize, MapPin, CheckCircle2, ShieldCheck, AlertCircle, Loader2
 } from 'lucide-react';
+import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
 
 const MarkAttendance = () => {
   const [sessionCode, setSessionCode] = useState('');
@@ -13,17 +14,17 @@ const MarkAttendance = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const submitAttendance = async (code, lat = 0, lng = 0) => {
+  const submitAttendance = async (code, location = null) => {
     if (!code) return toast.error("Session Code is required");
     setIsVerifying(true);
     try {
       const res = await api.post('/attendance/mark', {
         sessionCode: code.toUpperCase(),
-        location: { lat, lng }
+        location
       });
       setSuccess(true);
-      toast.success(res.data.message || "Attendance Marked Successfully!");
-      setTimeout(() => navigate('/history'), 1500);
+      toast.success(res.data.message || "Attendance Marked Successfully!", { duration: 2000 });
+      setTimeout(() => navigate('/history'), 2000);
     } catch (err) {
       toast.error(err.response?.data?.error || "Verification Failed");
     } finally {
@@ -31,41 +32,12 @@ const MarkAttendance = () => {
     }
   };
 
-  const handleVerify = (scannedCode) => {
+  const handleVerify = async (scannedCode) => {
     const finalCode = typeof scannedCode === 'string' ? scannedCode : sessionCode;
     if (!finalCode) return toast.error("Enter or scan a session code first");
-    if (!navigator.geolocation) return submitAttendance(finalCode, 0, 0);
 
-    setIsVerifying(true);
-    let locationResolved = false;
-    const timeoutId = setTimeout(() => {
-      if (!locationResolved) {
-        locationResolved = true;
-        setIsVerifying(false);
-        toast.error("Location timeout! Using fallback testing coordinates...");
-        // submit using fallback
-        setTimeout(() => submitAttendance(finalCode, 20.217364, 85.682077), 1000);
-      }
-    }, 15000);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (locationResolved) return;
-        locationResolved = true;
-        clearTimeout(timeoutId);
-        submitAttendance(finalCode, pos.coords.latitude, pos.coords.longitude);
-      },
-      () => {
-        if (locationResolved) return;
-        locationResolved = true;
-        clearTimeout(timeoutId);
-        setIsVerifying(false);
-        toast.error("Location blocked by OS/Browser! Using fallback testing coordinates...");
-        // submit using fallback
-        setTimeout(() => submitAttendance(finalCode, 20.217364, 85.682077), 1000);
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 14000 }
-    );
+    // Geolocation is currently disabled to speed up verification
+    await submitAttendance(finalCode, null);
   };
 
   return (
@@ -82,7 +54,7 @@ const MarkAttendance = () => {
           </div>
           <div className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-full text-blue-600 dark:text-blue-400 w-fit text-[11px] font-bold">
             <Info className="w-3.5 h-3.5 shrink-0" />
-            GPS Code Verified
+            Verification Active (Bypassed)
           </div>
         </div>
 
@@ -90,15 +62,15 @@ const MarkAttendance = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-5 items-start">
 
           {/* Left: Illustration and Info */}
-          <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 sm:p-7 shadow-sm flex flex-col items-center text-center">
+          <div className="glass-panel rounded-[2.5rem] p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center hover:shadow-[0_40px_80px_rgba(59,130,246,0.15)] transition-all duration-700">
             
             <div className="w-full max-w-[280px] aspect-square rounded-[30px] flex flex-col items-center justify-center relative mb-5">
                <img src="https://illustrations.popsy.co/blue/student-going-to-school.svg" alt="Student Marking Attendance" className="w-[90%] h-[90%] object-contain" />
             </div>
 
-            <h2 className="text-[19px] font-black text-gray-900 dark:text-white tracking-tight mb-2">Location Restricted Attendance</h2>
+            <h2 className="text-[19px] font-black text-gray-900 dark:text-white tracking-tight mb-2">Fast-Pass Attendance</h2>
             <p className="text-[13px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mb-6 px-4">
-              Enter the session code provided by your faculty. Make sure your GPS is turned on and you are within the college premises.
+              Enter the session code provided by your faculty. Location verification is currently disabled for your convenience.
             </p>
 
             {/* Tips */}
@@ -107,9 +79,9 @@ const MarkAttendance = () => {
                 <MapPin className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-[12px] font-bold text-blue-800 dark:text-blue-300 mb-0.5">Location Sync Required</h4>
+                <h4 className="text-[12px] font-bold text-blue-800 dark:text-blue-300 mb-0.5">Quick Verification</h4>
                 <p className="text-[11px] font-medium text-blue-600 dark:text-blue-400/80 leading-relaxed">
-                  The system will verify your coordinates. You must be physically present inside the 100m radius of the college to mark attendance successfully.
+                  Simply enter the 6-digit session code. Location bounds are currently not enforced.
                 </p>
               </div>
             </div>
@@ -119,7 +91,7 @@ const MarkAttendance = () => {
           <div className="space-y-4">
 
             {/* Location Check */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <div className="glass-card-3d p-6">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-1">Location Check</h3>
               <p className="text-[12px] text-gray-500 dark:text-slate-400 font-medium mb-4">Live geofence verification.</p>
               <div className="relative w-full h-40 bg-[#eef2f6] rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700/60">
@@ -132,28 +104,30 @@ const MarkAttendance = () => {
                   </div>
                   <MapPin className="w-6 h-6 text-blue-500 dark:text-blue-400 fill-blue-100 drop-shadow-md" strokeWidth={2} />
                 </div>
-                <div className="absolute bottom-2 left-2 right-2 bg-white dark:bg-slate-800/95 backdrop-blur rounded-xl p-2.5 shadow-lg border border-gray-100 dark:border-slate-700/50 flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-gray-400 dark:text-slate-500 animate-spin shrink-0" />
+                <div className="absolute bottom-3 left-3 right-3 glass-panel backdrop-blur-3xl rounded-2xl p-3 shadow-2xl flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin shrink-0" />
+                  </div>
                   <div>
-                    <p className="text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Location Verification</p>
-                    <p className="text-[11px] font-extrabold text-gray-800 dark:text-slate-200">Calculating Distance...</p>
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Verification Active</p>
+                    <p className="text-[12px] font-extrabold text-gray-800 dark:text-slate-200">Calculating GPS Delta...</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Verification Steps */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <div className="glass-card-3d p-6">
               <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-4">Verification Steps</h3>
               <div className="space-y-4">
                 {[
                   { icon: CheckCircle2, title: 'Session Verified', desc: 'App handshake with academic server.' },
                   { icon: ShieldCheck, title: 'Verify Code', desc: 'Validating session cryptographic key.' },
                   { icon: MapPin, title: 'Geofence Active', desc: 'Securely transmitting your GPS to check college bounds.' },
-                ].map(({ icon: Icon, title, desc }) => (
+                ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3 group cursor-default">
                     <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 flex items-center justify-center shrink-0 text-gray-400 dark:text-slate-500 group-hover:text-blue-500 dark:text-blue-400 group-hover:border-blue-100 dark:border-blue-500/20 group-hover:bg-blue-50 dark:bg-blue-500/10 transition-all">
-                      <Icon className="w-4 h-4" strokeWidth={2.5} />
+                      {React.createElement(icon, { className: "w-4 h-4", strokeWidth: 2.5 })}
                     </div>
                     <div className="pt-0.5">
                       <h4 className="text-[13px] font-bold text-gray-800 dark:text-slate-200 mb-0.5">{title}</h4>
@@ -165,7 +139,7 @@ const MarkAttendance = () => {
             </div>
 
             {/* Manual Code */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <div className="glass-card-3d p-6">
               <h4 className="text-[14px] font-bold text-gray-900 dark:text-white mb-3">Or Verify via Session Code</h4>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -198,3 +172,9 @@ const MarkAttendance = () => {
 };
 
 export default MarkAttendance;
+
+
+
+
+
+

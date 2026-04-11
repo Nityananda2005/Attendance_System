@@ -50,7 +50,7 @@ const SessionRow = ({ session, fetchSessions }) => {
   const time = new Date(session.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors bg-white dark:bg-slate-800">
+    <tr className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors bg-transparent border-b border-white/5 dark:border-white/5">
       <td className="px-6 py-5 whitespace-nowrap">
         <span className="text-[13.5px] font-black text-gray-900 dark:text-white bg-gray-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg">{session.sessionCode}</span>
       </td>
@@ -111,6 +111,10 @@ const SessionRow = ({ session, fetchSessions }) => {
 const AttendanceList = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('All Subjects');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const fetchSessions = async () => {
     try {
@@ -138,6 +142,26 @@ const AttendanceList = () => {
   useEffect(() => {
     fetchSessions();
   }, []);
+
+  // Reset to first page when filtering
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCourse]);
+
+  const courses = ['All Subjects', ...new Set(sessions.map(s => s.courseName))];
+
+  const filteredSessions = sessions.filter(s => {
+    const matchesSearch = s.courseName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCourse = selectedCourse === 'All Subjects' || s.courseName === selectedCourse;
+    
+    return matchesSearch && matchesCourse;
+  });
+
+  const totalPages = Math.ceil(filteredSessions.length / ITEMS_PER_PAGE);
+  const paginatedSessions = filteredSessions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const totalSessions = sessions.length;
   const studentsRecorded = sessions.reduce((acc, curr) => acc + (curr.presentCount || 0), 0);
@@ -206,7 +230,7 @@ const AttendanceList = () => {
 
             {/* Top Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-8 mb-8">
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-5">
+              <div className="glass-card-3d p-6 flex items-center gap-5">
                  <div className="w-[52px] h-[52px] rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0 shadow-inner">
                    <CalendarDays className="w-6 h-6 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
                  </div>
@@ -215,7 +239,7 @@ const AttendanceList = () => {
                    <p className="text-[10px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">Total Sessions</p>
                  </div>
               </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-5">
+              <div className="glass-card-3d p-6 flex items-center gap-5">
                  <div className="w-[52px] h-[52px] rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center shrink-0 shadow-inner">
                    <Users className="w-6 h-6 text-green-500" strokeWidth={2.5}/>
                  </div>
@@ -224,7 +248,7 @@ const AttendanceList = () => {
                    <p className="text-[10px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">Students Recorded</p>
                  </div>
               </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-5">
+              <div className="glass-card-3d p-6 flex items-center gap-5">
                  <div className="w-[52px] h-[52px] rounded-2xl bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center shrink-0 shadow-inner">
                    <BookOpen className="w-6 h-6 text-orange-500" strokeWidth={2.5}/>
                  </div>
@@ -233,12 +257,12 @@ const AttendanceList = () => {
                    <p className="text-[10px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">Average Attendance</p>
                  </div>
               </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-5">
-                 <div className="w-[52px] h-[52px] rounded-2xl bg-indigo-50 flex items-center justify-center shrink-0 shadow-inner">
+              <div className="glass-card-3d p-6 flex items-center gap-5">
+                 <div className="w-[52px] h-[52px] rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0 shadow-inner">
                    <FileText className="w-6 h-6 text-indigo-500" strokeWidth={2.5}/>
                  </div>
                  <div className="w-full">
-                    <button onClick={handleGenerateReport} className="w-full py-2 bg-white dark:bg-slate-800 border-2 border-indigo-100 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 text-[13px] font-bold rounded-xl transition-colors">
+                    <button onClick={handleGenerateReport} className="w-full py-2 bg-white/50 dark:bg-slate-800/50 border-2 border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 hover:border-indigo-200 text-[13px] font-bold rounded-xl transition-colors">
                         Generate Report
                     </button>
                  </div>
@@ -246,22 +270,28 @@ const AttendanceList = () => {
             </div>
 
             {/* List Table Area */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-3xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden">
-              <div className="p-7 border-b border-gray-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-5 bg-white dark:bg-slate-800">
+            <div className="glass-panel rounded-3xl shadow-2xl overflow-hidden hover:shadow-[0_32px_64px_rgba(0,0,0,0.2)] transition-all duration-700">
+              <div className="p-7 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5 bg-transparent">
                 <div className="flex-1 flex flex-col sm:flex-row items-center gap-4 w-full">
                   <div className="relative w-full sm:w-[320px]">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" strokeWidth={2.5} />
                     <input 
                       type="text"
-                      placeholder="Search sessions or topics..."
+                      placeholder="Search by subject name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-11 pr-4 py-3 bg-[#f8fafc] border border-gray-200 dark:border-slate-700 rounded-[14px] text-[13.5px] font-bold text-gray-700 dark:text-slate-300 placeholder-gray-400 focus:outline-none focus:bg-white dark:bg-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
                   <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                      <select className="px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-[14px] text-[13px] font-bold text-gray-700 dark:text-slate-300 focus:outline-none cursor-pointer hover:bg-gray-50 dark:bg-slate-800/50 transition-colors shadow-sm min-w-[140px]">
-                          <option>All Courses</option>
-                          <option>CS402</option>
-                          <option>CS405</option>
+                      <select 
+                        value={selectedCourse}
+                        onChange={(e) => setSelectedCourse(e.target.value)}
+                        className="px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-[14px] text-[13px] font-bold text-gray-700 dark:text-slate-300 focus:outline-none cursor-pointer hover:bg-gray-50 dark:bg-slate-800/50 transition-colors shadow-sm min-w-[140px]"
+                      >
+                          {courses.map(course => (
+                              <option key={course} value={course}>{course}</option>
+                          ))}
                       </select>
                       <button className="flex items-center justify-center p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-800/50 text-gray-500 dark:text-slate-400 rounded-[14px] transition-all shadow-sm shrink-0">
                           <Filter className="w-[18px] h-[18px]" strokeWidth={2.5} />
@@ -295,25 +325,39 @@ const AttendanceList = () => {
                   <tbody className="divide-y divide-gray-100">
                     {loading ? (
                       <tr><td colSpan="6" className="text-center py-8 text-gray-400 dark:text-slate-500 font-bold">Loading records...</td></tr>
-                    ) : sessions.length > 0 ? (
-                      sessions.map(session => (
+                    ) : paginatedSessions.length > 0 ? (
+                      paginatedSessions.map(session => (
                         <SessionRow 
-                          key={session._id}
-                          session={session}
+                          key={session._id} 
+                          session={session} 
                           fetchSessions={fetchSessions}
                         />
                       ))
                     ) : (
-                      <tr><td colSpan="6" className="text-center py-8 text-gray-400 dark:text-slate-500 font-bold">No sessions found. Create one from the dashboard.</td></tr>
+                      <tr><td colSpan="6" className="text-center py-12 text-gray-400 dark:text-slate-500 font-bold">No sessions found matching your criteria.</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
               <div className="p-6 flex items-center justify-between bg-gray-50 dark:bg-slate-800/50">
-                <p className="text-[13px] font-bold text-gray-500 dark:text-slate-400">Showing {sessions.length} sessions</p>
+                <p className="text-[13px] font-bold text-gray-500 dark:text-slate-400">
+                  Showing {filteredSessions.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredSessions.length)} of {filteredSessions.length} sessions
+                </p>
                 <div className="flex items-center gap-2">
-                  <button className="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[13px] font-bold text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:text-slate-400 rounded-xl transition-colors shadow-sm">Previous</button>
-                  <button className="px-5 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[13px] font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:text-blue-400 rounded-xl transition-colors shadow-sm">Next</button>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1 || loading}
+                    className="px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[13px] font-bold text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm"
+                  >
+                    Previous
+                  </button>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || totalPages === 0 || loading}
+                    className="px-5 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[13px] font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-sm"
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             </div>

@@ -127,7 +127,7 @@ const Profile = () => {
 
           {/* Left: Profile Card */}
           <div className="w-full lg:w-[300px] shrink-0 space-y-4">
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+            <div className="glass-panel rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500">
               <div className="h-20 bg-linear-to-r from-blue-400 to-blue-600" />
               <div className="px-5 pb-5 flex flex-col items-center -mt-10">
                 <div className="relative mb-3">
@@ -179,7 +179,7 @@ const Profile = () => {
             </div>
 
             {/* Security & Settings */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <div className="glass-panel p-5 shadow-xl hover:shadow-2xl transition-all duration-500">
               <h3 className="text-[10px] font-extrabold text-gray-400 dark:text-slate-500 tracking-widest mb-4 uppercase">Settings & Account</h3>
               <div className="space-y-2">
                 {[
@@ -255,7 +255,7 @@ const Profile = () => {
             </div>
 
             {/* Contact */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 sm:p-6 shadow-sm">
+            <div className="glass-panel p-5 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-500">
               <div className="flex items-center gap-2.5 mb-5">
                 <Mail className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
                 <h3 className="text-[16px] font-extrabold text-gray-900 dark:text-white">Personal & Contact Details</h3>
@@ -289,8 +289,8 @@ const Profile = () => {
                 { icon: Award, value: '--', label: 'Academic Rank', bg: 'bg-orange-50 dark:bg-orange-500/10', color: 'text-orange-500' },
                 { icon: Book, value: '--', label: 'Course Credits', bg: 'bg-blue-50 dark:bg-blue-500/10', color: 'text-blue-500 dark:text-blue-400' },
               ].map(({ icon: Icon, value, label, bg, color }) => (
-                <div key={label} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-3 sm:p-4 shadow-sm flex items-center gap-2.5">
-                  <div className={`w-8 h-8 rounded-full ${bg} flex items-center justify-center shrink-0`}>
+                <div key={label} className="glass-card-3d p-3 sm:p-4 flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-full ${bg} flex items-center justify-center shrink-0 shadow-inner`}>
                     <Icon className={`w-4 h-4 ${color}`} strokeWidth={2.5} />
                   </div>
                   <div className="min-w-0">

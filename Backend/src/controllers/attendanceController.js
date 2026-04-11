@@ -21,6 +21,9 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; // Distance in meters
 };
 
+const hasValidCoordinates = (location) =>
+  Number.isFinite(location?.lat) && Number.isFinite(location?.lng);
+
 // @desc    Student marks attendance
 // @route   POST /api/attendance/mark
 // @access  Private/Student
@@ -37,36 +40,29 @@ export const markAttendance = async (req, res) => {
       return res.status(404).json({ message: "Invalid or inactive session code" });
     }
 
-    const COLLEGE_LAT = 20.217364;
-    const COLLEGE_LNG = 85.682077;
-    // TEMPORARY BYPASS: Expanded the radius to 99,999 KM so you can test it successfully from your house!
-    // Change this back to 100 when you deploy.
-    const ALLOWED_RADIUS = 99999999; 
+    // Geolocation verification is currently DISBLED as per user request
+    const geofenceEnabled = false; 
 
-    if (!lat || !lng) {
-      return res.status(400).json({ message: "Device location is required to verify your attendance!" });
+    if (geofenceEnabled) {
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return res.status(400).json({ message: "Device location is required to verify your attendance for this session." });
+      }
+
+      const distance = calculateDistance(
+        session.location.lat,
+        session.location.lng,
+        lat,
+        lng
+      );
+
+      if (distance > session.radiusAllowed) {
+        return res.status(403).json({
+          message: `You are outside the allowed session area (${Math.round(distance)}m away).`,
+          distance: Math.round(distance),
+          radiusAllowed: Math.round(session.radiusAllowed),
+        });
+      }
     }
-    
-    if (lat === 0 && lng === 0) {
-      return res.status(400).json({ message: "We couldn't get your GPS location. Please allow location access in your browser or wait a few seconds and try again." });
-    }
-
-    const distance = calculateDistance(
-      COLLEGE_LAT,
-      COLLEGE_LNG,
-      lat,
-      lng
-    );
-
-    if (distance > ALLOWED_RADIUS) {
-      return res.status(403).json({ 
-        message: `You are outside the college premises (${Math.round(distance)}m away). Attendance denied and marked as absent.`,
-        distance: Math.round(distance),
-      });
-    }
-
-    // Console log the accurate distance so the developer can see how far away they are
-    console.log(`[TESTING] Student marked attendance from ${Math.round(distance)} meters away from college.`);
 
     // 3. Prevent duplicate marking
     const alreadyMarked = await Attendance.findOne({
@@ -231,24 +227,26 @@ export const getStudentAnalytics = async (req, res) => {
 
     const overallAttendanceRate = totalSessions > 0 ? Math.round((totalPresentDays / totalSessions) * 100) : 0;
 
-    // Group sessions by course
+    // Group sessions by course (Case-insensitive)
     const courseData = {};
     finalSessions.forEach(session => {
-       if (!courseData[session.courseId]) {
-          courseData[session.courseId] = {
+       const groupKey = session.courseName.trim().toLowerCase();
+       if (!courseData[groupKey]) {
+          courseData[groupKey] = {
              courseId: session.courseId,
-             courseName: session.courseName,
+             courseName: session.courseName, // Store original for display (first occurrence)
              total: 0,
              present: 0
           };
        }
-       courseData[session.courseId].total += 1;
+       courseData[groupKey].total += 1;
     });
 
     // Count presence in those sessions
     attendedRecords.forEach(record => {
-       if (record.sessionId && courseData[record.sessionId.courseId]) {
-          courseData[record.sessionId.courseId].present += 1;
+       const groupKey = record.sessionId?.courseName?.trim().toLowerCase();
+       if (groupKey && courseData[groupKey]) {
+          courseData[groupKey].present += 1;
        }
     });
 
@@ -362,3 +360,6 @@ export const getLeaderboard = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+

@@ -56,48 +56,48 @@ const Leaderboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 items-end">
               {/* Position 2 */}
               {top3[1] && (
-                <div className="glass-panel p-5 text-center flex flex-col items-center order-2 sm:order-1 sm:h-[90%] transform transition-transform hover:-translate-y-1">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-3 ${getMedalColor(1)}`}>
+                <div className="glass-card-3d p-5 text-center flex flex-col items-center order-2 sm:order-1 sm:h-[90%]">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-3 shadow-inner ${getMedalColor(1)}`}>
                     <Medal className="w-5 h-5" />
                   </div>
-                  <img src={top3[1].avatar} alt={top3[1].name} className="w-16 h-16 rounded-full mb-3 shadow-md" />
+                  <img src={top3[1].avatar} alt={top3[1].name} className="w-16 h-16 rounded-full mb-3 shadow-xl border-2 border-white/50" />
                   <h3 className="font-extrabold text-gray-900 dark:text-white text-sm mb-1">{top3[1].name}</h3>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{top3[1].department}</span>
-                  <div className="mt-4 w-full bg-gray-50 dark:bg-slate-800/80 rounded-xl p-2 border border-gray-100 dark:border-slate-700">
+                  <div className="mt-4 w-full bg-white/50 dark:bg-slate-800/80 rounded-2xl p-3 border border-gray-100 dark:border-white/10 shadow-inner">
                     <p className="font-black text-gray-800 dark:text-slate-200 text-lg">{top3[1].attendanceRate}%</p>
-                    <p className="text-[10px] text-gray-500 flex items-center justify-center gap-1"><Flame className="w-3 h-3 text-orange-500"/> {top3[1].currentStreak} Streak</p>
+                    <p className="text-[10px] text-gray-500 flex items-center justify-center gap-1 font-bold mt-1"><Flame className="w-3 h-3 text-orange-500"/> {top3[1].currentStreak} Streak</p>
                   </div>
                 </div>
               )}
               
               {/* Position 1 */}
-              <div className="glass-panel p-6 text-center flex flex-col items-center relative order-1 sm:order-2 border-yellow-400/30 dark:border-yellow-400/20 shadow-yellow-500/10 transform sm:-translate-y-4 hover:-translate-y-6 transition-transform">
-                <div className="absolute -top-6 w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-yellow-400 text-white">
+              <div className="glass-panel p-6 text-center flex flex-col items-center relative order-1 sm:order-2 border-yellow-400/30 dark:border-yellow-400/20 shadow-[0_25px_50px_-12px_rgba(234,179,8,0.3)] transform sm:-translate-y-4 hover:-translate-y-6 hover:shadow-[0_35px_60px_-15px_rgba(234,179,8,0.4)] transition-all duration-500 rounded-3xl">
+                <div className="absolute -top-6 w-12 h-12 rounded-full flex items-center justify-center shadow-lg bg-yellow-400 text-white border-4 border-white dark:border-slate-900">
                   <Award className="w-6 h-6" />
                 </div>
-                <img src={top3[0].avatar} alt={top3[0].name} className="w-20 h-20 rounded-full mb-3 mt-4 border-4 border-yellow-400/20 shadow-xl" />
+                <img src={top3[0].avatar} alt={top3[0].name} className="w-24 h-24 rounded-full mb-3 mt-4 border-4 border-yellow-400 shadow-2xl" />
                 <h3 className="font-black text-gray-900 dark:text-white text-base mb-1">{top3[0].name}</h3>
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{top3[0].department}</span>
-                <div className="mt-4 w-full bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-500/10 dark:to-orange-500/10 rounded-xl p-3 border border-yellow-200/50 dark:border-yellow-500/20">
-                  <p className="font-black text-yellow-600 dark:text-yellow-400 text-2xl">{top3[0].attendanceRate}%</p>
-                  <p className="text-[11px] font-bold text-yellow-600/70 dark:text-yellow-400/70 flex items-center justify-center gap-1 uppercase tracking-widest mt-1">
-                    <Flame className="w-3.5 h-3.5" strokeWidth={3}/> {top3[0].currentStreak} Streak
+                <div className="mt-4 w-full bg-gradient-to-br from-yellow-400/10 to-orange-500/10 dark:from-yellow-500/20 dark:to-orange-500/20 rounded-2xl p-4 border border-yellow-400/30 dark:border-yellow-500/30 shadow-inner">
+                  <p className="font-black text-yellow-600 dark:text-yellow-400 text-3xl">{top3[0].attendanceRate}%</p>
+                  <p className="text-[11px] font-black text-yellow-600/70 dark:text-yellow-400/70 flex items-center justify-center gap-1 uppercase tracking-widest mt-1">
+                    <Flame className="w-4 h-4" strokeWidth={3}/> {top3[0].currentStreak} Streak
                   </p>
                 </div>
               </div>
 
               {/* Position 3 */}
               {top3[2] && (
-                <div className="glass-panel p-5 text-center flex flex-col items-center order-3 sm:order-3 sm:h-[80%] transform transition-transform hover:-translate-y-1">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-3 ${getMedalColor(2)}`}>
+                <div className="glass-card-3d p-5 text-center flex flex-col items-center order-3 sm:order-3 sm:h-[80%]">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-3 shadow-inner ${getMedalColor(2)}`}>
                     <Medal className="w-5 h-5" />
                   </div>
-                  <img src={top3[2].avatar} alt={top3[2].name} className="w-14 h-14 rounded-full mb-3 shadow-md" />
+                  <img src={top3[2].avatar} alt={top3[2].name} className="w-14 h-14 rounded-full mb-3 shadow-xl border-2 border-white/50" />
                   <h3 className="font-extrabold text-gray-900 dark:text-white text-sm mb-1">{top3[2].name}</h3>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{top3[2].department}</span>
-                  <div className="mt-3 w-full bg-gray-50 dark:bg-slate-800/80 rounded-xl p-2 border border-gray-100 dark:border-slate-700">
+                  <div className="mt-3 w-full bg-white/50 dark:bg-slate-800/80 rounded-2xl p-2 border border-gray-100 dark:border-white/10 shadow-inner">
                     <p className="font-black text-gray-800 dark:text-slate-200 text-base">{top3[2].attendanceRate}%</p>
-                    <p className="text-[10px] text-gray-500 flex items-center justify-center gap-1"><Flame className="w-3 h-3 text-orange-500"/> {top3[2].currentStreak} Streak</p>
+                    <p className="text-[10px] text-gray-500 flex items-center justify-center gap-1 font-bold mt-1"><Flame className="w-3 h-3 text-orange-500"/> {top3[2].currentStreak} Streak</p>
                   </div>
                 </div>
               )}
@@ -106,7 +106,7 @@ const Leaderboard = () => {
 
           {/* Rest of the list */}
           {rest.length > 0 && (
-            <div className="glass-panel rounded-2xl overflow-hidden p-1">
+            <div className="glass-panel rounded-3xl overflow-hidden p-2 hover:shadow-2xl transition-all duration-700">
               {rest.map((student, idx) => (
                 <div key={student._id} className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors border-b border-gray-50 dark:border-slate-800/50 last:border-0 group">
                   <div className="w-6 text-center text-[13px] font-black text-gray-400 group-hover:text-blue-500 transition-colors">

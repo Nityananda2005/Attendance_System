@@ -3,13 +3,22 @@ import Attendance from "../models/Attendance.js";
 import crypto from "crypto";
 import { sendNotificationToStudents } from "../utils/sseProvider.js";
 
+const COLLEGE_LOCATION = {
+  lat: 20.21736,
+  lng: 85.682066,
+};
+
+const COLLEGE_RADIUS_METERS = 200;
+
 // @desc    Create a new session (Faculty only)
 // @route   POST /api/sessions
 // @access  Private/Faculty
 export const createSession = async (req, res) => {
-  const { courseId, courseName, topic, location, radiusAllowed, department, semester } = req.body;
+  const { courseId, courseName, topic, radiusAllowed, department, semester } = req.body;
 
   try {
+    const geofenceEnabled = radiusAllowed !== null && radiusAllowed !== undefined;
+
     // Generate a unique 6-character alphanumeric code
     const sessionCode = crypto.randomBytes(3).toString("hex").toUpperCase();
 
@@ -19,8 +28,8 @@ export const createSession = async (req, res) => {
       courseName,
       topic,
       sessionCode,
-      location, // { lat: X, lng: Y }
-      radiusAllowed: radiusAllowed || 50,
+      location: geofenceEnabled ? COLLEGE_LOCATION : undefined,
+      radiusAllowed: geofenceEnabled ? COLLEGE_RADIUS_METERS : null,
       department: department || req.user.department,
       semester: semester || req.user.semester,
     });
@@ -156,3 +165,5 @@ export const deleteAllFacultySessions = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+

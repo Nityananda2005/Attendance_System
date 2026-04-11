@@ -18,6 +18,9 @@ const History = () => {
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('All Subjects');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -39,9 +42,30 @@ const History = () => {
   }, []);
 
   const absentDays = Math.max(0, (analytics.totalSessions || 0) - (analytics.totalPresentDays || 0));
-  const filtered = historyList.filter(r =>
-    r.sessionId?.courseName?.toLowerCase().includes(search.toLowerCase()) ||
-    r.sessionId?.topic?.toLowerCase().includes(search.toLowerCase())
+  
+  // Get unique subjects for dropdown (Case-insensitive)
+  const rawSubjects = historyList.map(r => r.sessionId?.courseName?.trim()).filter(Boolean);
+  const uniqueSubjects = ['All Subjects', ...Array.from(new Set(rawSubjects.map(s => s.toLowerCase()))).map(lower => {
+    return rawSubjects.find(s => s.toLowerCase() === lower);
+  })];
+
+  const filtered = historyList.filter(r => {
+    const course = r.sessionId?.courseName || '';
+    const matchesSearch = course.toLowerCase().includes(search.toLowerCase());
+    const matchesSubject = selectedSubject === 'All Subjects' || course.toLowerCase() === selectedSubject.toLowerCase();
+    
+    return matchesSearch && matchesSubject;
+  });
+
+  // Reset to first page when filtering
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedSubject]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   // ─── PDF Download ────────────────────────────────────────────────
@@ -119,14 +143,14 @@ const History = () => {
       });
 
       // ── Attendance table ──
-      const tableRows = historyList.map((r, idx) => [
+      const tableRows = filtered.map((r, idx) => [
         `${idx + 1}`,
         r.sessionId?.courseName || '-',
         r.sessionId?.topic || '-',
         r.sessionId?.facultyId?.name || 'Unknown',
-        new Date(r.markedAt).toLocaleDateString(),
-        record.markedAt ? new Date(record.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Missed',
-        record.status,
+        r.markedAt ? new Date(r.markedAt).toLocaleDateString() : new Date(r.sessionId?.createdAt).toLocaleDateString(),
+        r.markedAt ? new Date(r.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Missed',
+        r.status,
       ]);
 
       autoTable(doc, {
@@ -183,14 +207,14 @@ const History = () => {
   // ─── CSV Download ────────────────────────────────────────────────
   const handleDownloadCSV = () => {
     const header = ['#', 'Course', 'Topic', 'Faculty', 'Date', 'Time', 'Status'];
-    const rows = historyList.map((r, i) => [
+    const rows = filtered.map((r, i) => [
       i + 1,
       `"${r.sessionId?.courseName || ''}"`,
       `"${r.sessionId?.topic || ''}"`,
       `"${r.sessionId?.facultyId?.name || 'Unknown'}"`,
-      new Date(r.markedAt).toLocaleDateString(),
-      record.markedAt ? new Date(record.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Missed',
-      record.status,
+      r.markedAt ? new Date(r.markedAt).toLocaleDateString() : new Date(r.sessionId?.createdAt).toLocaleDateString(),
+      r.markedAt ? new Date(r.markedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Missed',
+      r.status,
     ]);
     const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -222,8 +246,9 @@ const History = () => {
               <span className="hidden sm:inline">Export CSV</span>
             </button>
             <button
-              disabled
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-300 rounded-xl text-[12px] font-semibold text-white cursor-not-allowed opacity-50 shadow-sm"
+              onClick={handleDownloadPDF}
+              disabled={historyList.length === 0}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl text-[12px] font-semibold text-white transition-all shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <FileText className="w-3.5 h-3.5" strokeWidth={2.5} />
               <span className="hidden sm:inline">PDF Report</span>
@@ -239,7 +264,7 @@ const History = () => {
             { label: 'Present Days', value: analytics.totalPresentDays, sub: '', icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-500/10' },
             { label: 'Absent Days', value: absentDays, sub: analytics.overallAttendanceRate < 75 ? 'Low Attendance!' : '', icon: XCircle, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
           ].map(({ label, value, sub, icon: Icon, color, bg }) => (
-            <div key={label} className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+            <div key={label} className="glass-card-3d p-4">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <p className="text-[11px] sm:text-[12px] font-bold text-gray-500 dark:text-slate-400">{label}</p>
@@ -255,7 +280,7 @@ const History = () => {
         </div>
 
         {/* Records Table */}
-        <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+        <div className="glass-panel rounded-3xl shadow-2xl overflow-hidden hover:shadow-[0_32px_64px_rgba(0,0,0,0.2)] transition-all duration-700">
           {/* Toolbar */}
           <div className="p-4 border-b border-gray-50 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-3">
             <div className="relative w-full sm:w-[300px]">
@@ -270,8 +295,14 @@ const History = () => {
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-none">
-                <select className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[12px] font-semibold text-gray-700 dark:text-slate-300 focus:outline-none cursor-pointer transition-all">
-                  <option>All Subjects</option>
+                <select 
+                  value={selectedSubject}
+                  onChange={e => setSelectedSubject(e.target.value)}
+                  className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[12px] font-semibold text-gray-700 dark:text-slate-300 focus:outline-none cursor-pointer transition-all"
+                >
+                  {uniqueSubjects.map(sub => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-slate-500 pointer-events-none" strokeWidth={2.5} />
               </div>
@@ -299,8 +330,8 @@ const History = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {filtered.map((record) => (
-                      <tr key={record._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors bg-white dark:bg-slate-800">
+                    {paginated.map((record) => (
+                      <tr key={record._id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors bg-transparent">
                         <td className="px-5 py-4">
                           <p className="text-[13px] font-bold text-gray-900 dark:text-white">{record.sessionId?.courseName}</p>
                           <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400 mt-0.5">{record.sessionId?.topic}</p>
@@ -334,7 +365,7 @@ const History = () => {
 
               {/* Mobile cards */}
               <div className="sm:hidden divide-y divide-gray-50">
-                {filtered.map((record) => (
+                {paginated.map((record) => (
                   <div key={record._id} className="p-4 flex items-start gap-3">
                     <div className="w-9 h-9 rounded-full bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/20 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -358,6 +389,29 @@ const History = () => {
                     )}
                   </div>
                 ))}
+              </div>
+              
+              {/* Pagination Footer */}
+              <div className="p-4 flex items-center justify-between bg-gray-50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-700">
+                <p className="text-[11px] font-bold text-gray-500 dark:text-slate-400">
+                  Showing {filtered.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} to {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} sessions
+                </p>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1 || loading}
+                    className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[11px] font-bold text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                  >
+                    Prev
+                  </button>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || totalPages === 0 || loading}
+                    className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-[11px] font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </>
           ) : (

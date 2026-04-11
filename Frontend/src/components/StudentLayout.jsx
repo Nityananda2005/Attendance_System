@@ -7,6 +7,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { Bell, Sun, Moon, MapPin, LayoutDashboard, QrCode, Clock, User, Trophy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../api/axios';
+import { getCurrentCoordinates, getGeolocationErrorMessage } from '../utils/geolocation';
 
 /**
  * StudentLayout – wraps every student page with a responsive sidebar + navbar.
@@ -15,7 +16,7 @@ import api from '../api/axios';
  *     <main content here>
  *   </StudentLayout>
  */
-const StudentLayout = ({ children, title, subtitle }) => {
+const StudentLayout = ({ children, title }) => {
   const { user } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
@@ -35,58 +36,35 @@ const StudentLayout = ({ children, title, subtitle }) => {
   const handleMarkAttendanceFromNotification = async (code) => {
     if (!code) return;
     
-    const loadingToast = toast.loading("Verifying your location...");
+    const loadingToast = toast.loading("Processing...");
 
     const submit = async (lat, lng) => {
       try {
-        const res = await api.post('/attendance/mark', {
+        await api.post('/attendance/mark', {
           sessionCode: code.toUpperCase(),
-          location: { lat, lng }
+          location: lat != null && lng != null ? { lat, lng } : null
         });
-        toast.success("Attendance Marked Successfully!", { id: loadingToast, icon: '✅' });
+        toast.success("Attendance Marked Successfully!", { id: loadingToast, duration: 2000 });
         
-        // Remove from notifications locally since it's marked
         setNotifications(prev => prev.filter(n => n.sessionCode !== code));
         
-        navigate('/history');
+        setTimeout(() => {
+          navigate('/history');
+        }, 2000);
       } catch (err) {
         toast.error(err.response?.data?.error || err.response?.data?.message || "Verification Failed", { id: loadingToast });
       }
     };
 
-    if (!navigator.geolocation) {
-      submit(0, 0);
-      return;
-    }
-
-    let resolved = false;
-    const timeout = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        toast.error("Location timeout! Using fallback testing coordinates...", { id: loadingToast });
-        setTimeout(() => submit(20.217364, 85.682077), 1000);
-      }
-    }, 15000);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (resolved) return;
-        resolved = true;
-        clearTimeout(timeout);
-        submit(pos.coords.latitude, pos.coords.longitude);
-      },
-      (err) => {
-        if (resolved) return;
-        resolved = true;
-        clearTimeout(timeout);
-        toast.error("Location blocked by OS/Browser! Using fallback testing coordinates...", { id: loadingToast });
-        setTimeout(() => submit(20.217364, 85.682077), 1000);
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 14000 }
-    );
+    // Geolocation is currently disabled
+    await submit(undefined, undefined);
   };
 
   const showActiveSessionToast = (message, sessionCode) => {
+    // Prevent duplicate popups for the same session in the current browser session
+    const notified = JSON.parse(sessionStorage.getItem('notified_sessions') || '[]');
+    if (notified.includes(sessionCode)) return;
+    
     toast.custom((t) => (
        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-sm w-full bg-white dark:bg-slate-800 shadow-[0_20px_50px_rgba(59,130,246,0.2)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl pointer-events-auto flex flex-col overflow-hidden border-2 border-blue-500 p-5 mt-2`}>
          <div className="flex items-start">
@@ -117,6 +95,9 @@ const StudentLayout = ({ children, title, subtitle }) => {
          </div>
        </div>
     ), { duration: Infinity, position: 'top-center' });
+
+    // Mark as notified
+    sessionStorage.setItem('notified_sessions', JSON.stringify([...notified, sessionCode]));
   };
 
   // Fetch already active sessions on mount/refresh
@@ -188,7 +169,7 @@ const StudentLayout = ({ children, title, subtitle }) => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#f8fbff] dark:bg-slate-900 font-sans overflow-hidden relative transition-colors duration-300">
+    <div className="flex h-screen bg-[#f8fbff] dark:bg-slate-950 font-sans overflow-hidden relative transition-colors duration-300 mesh-bg">
 
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -321,3 +302,9 @@ const StudentLayout = ({ children, title, subtitle }) => {
 };
 
 export default StudentLayout;
+
+
+
+
+
+
