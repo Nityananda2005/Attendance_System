@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import StudentLayout from '../../components/StudentLayout';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../../api/axios';
+import { AuthContext } from '../../context/AuthContext';
+import StudentLayout from '../../components/StudentLayout';
+import FacultyLayout from '../../components/FacultyLayout';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { 
   Pencil, ShieldCheck, Clock, AlertCircle, BookOpen, GraduationCap, 
-  Users, CalendarDays, Hash, Mail, Phone, CheckCircle2, Award, Book, Save, X
+  Users, CalendarDays, Hash, Mail, Phone, CheckCircle2, Award, Book, Save, X,
+  LogOut
 } from 'lucide-react';
 
 const Profile = () => {
+  const { user, logoutAction } = useContext(AuthContext);
+  const Layout = user?.role === 'faculty' ? FacultyLayout : StudentLayout;
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -68,24 +75,26 @@ const Profile = () => {
   };
 
   if (loading) {
-    return (
-      <StudentLayout title="Profile">
+    return <Layout title="Profile">
         <div className="flex-1 flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
-      </StudentLayout>
-    );
+      </Layout>;
   }
 
   return (
-    <StudentLayout title="Profile">
+    <Layout title="Profile">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Student Profile</h1>
-            <p className="text-[13px] text-gray-500 dark:text-slate-400 mt-0.5 font-medium">Manage your academic identity and personal information.</p>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              {user?.role === 'faculty' ? 'Faculty Profile' : 'Student Profile'}
+            </h1>
+            <p className="text-[13px] text-gray-500 dark:text-slate-400 mt-0.5 font-medium">
+              {user?.role === 'faculty' ? 'Manage your teaching profile and account.' : 'Manage your academic identity and personal information.'}
+            </p>
           </div>
           {!isEditing ? (
             <button
@@ -147,41 +156,67 @@ const Profile = () => {
                   <p className="text-[12px] text-gray-500 dark:text-slate-400 font-medium mt-0.5 truncate">{profile.email}</p>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2 mt-3">
-                  <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wide">Active Student</span>
+                  <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                    {user?.role === 'faculty' ? 'Verified Faculty' : 'Active Student'}
+                  </span>
                 </div>
-                <div className="w-full h-px bg-gray-100 dark:bg-slate-700/50 my-4" />
-                <div className="w-full space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold">Student ID</span>
-                    <span className="text-[12px] text-gray-900 dark:text-white font-bold">{profile.enrollmentId || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold">Joined</span>
-                    <span className="text-[12px] text-gray-900 dark:text-white font-bold">
-                      {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
-                    </span>
-                  </div>
-                </div>
+                 <div className="w-full h-px bg-gray-100 dark:bg-slate-700/50 my-4" />
+                 <div className="w-full space-y-2.5">
+                   <div className="flex items-center justify-between">
+                     <span className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold">
+                       {user?.role === 'faculty' ? 'Faculty ID' : 'Student ID'}
+                     </span>
+                     <span className="text-[12px] text-gray-900 dark:text-white font-bold">{profile.enrollmentId || profile.facultyId || 'N/A'}</span>
+                   </div>
+                   <div className="flex items-center justify-between">
+                     <span className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold">Joined</span>
+                     <span className="text-[12px] text-gray-900 dark:text-white font-bold">
+                       {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
+                     </span>
+                   </div>
+                 </div>
               </div>
             </div>
 
-            {/* Security */}
+            {/* Security & Settings */}
             <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
-              <h3 className="text-[10px] font-extrabold text-gray-400 dark:text-slate-500 tracking-widest mb-3">SECURITY & ACCESS</h3>
-              <div className="space-y-1">
+              <h3 className="text-[10px] font-extrabold text-gray-400 dark:text-slate-500 tracking-widest mb-4 uppercase">Settings & Account</h3>
+              <div className="space-y-2">
                 {[
                   { icon: ShieldCheck, label: 'Two-Factor Auth' },
-                  { icon: Clock, label: 'Login Sessions' },
-                  { icon: AlertCircle, label: 'Reset Password', danger: true },
-                ].map(({ icon: Icon, label, danger }) => (
+                  { icon: Clock, label: 'Active Sessions' },
+                  { icon: AlertCircle, label: 'Reset Password' },
+                ].map(({ icon: Icon, label }) => (
                   <button
                     key={label}
-                    className={`w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 dark:bg-slate-800/50 rounded-xl transition-colors ${danger ? 'hover:bg-red-50 dark:bg-red-500/10' : ''}`}
+                    className="w-full flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded-xl transition-all border border-transparent hover:border-gray-100 dark:hover:border-slate-600"
                   >
-                    <Icon className={`w-4 h-4 ${danger ? 'text-red-500' : 'text-blue-500 dark:text-blue-400'}`} strokeWidth={2.5} />
-                    <span className={`text-[13px] font-bold ${danger ? 'text-red-500' : 'text-gray-700 dark:text-slate-300'}`}>{label}</span>
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-4 h-4 text-blue-500 dark:text-blue-400" strokeWidth={2.5} />
+                      <span className="text-[13px] font-bold text-gray-700 dark:text-slate-200">{label}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-400">Configure</span>
                   </button>
                 ))}
+
+                <div className="h-px bg-gray-100 dark:bg-slate-700/50 my-2" />
+
+                {/* Logout Button */}
+                <button
+                  onClick={() => {
+                    logoutAction();
+                    navigate('/login');
+                  }}
+                  className="w-full flex items-center gap-3 p-3 bg-red-50 dark:bg-red-500/5 hover:bg-red-100 dark:hover:bg-red-500/10 rounded-xl transition-all border border-red-100/50 dark:border-red-500/20 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20 group-hover:scale-110 transition-transform">
+                    <LogOut className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-[13px] font-bold text-red-600 dark:text-red-400">Sign Out</p>
+                    <p className="text-[10px] font-medium text-red-500/70">End your current session</p>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -273,7 +308,7 @@ const Profile = () => {
           <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500">© 2026 Attendify College Solutions. All rights reserved.</p>
         </footer>
       </div>
-    </StudentLayout>
+    </Layout>
   );
 };
 

@@ -4,8 +4,9 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import {
   Activity, LayoutDashboard, PlusCircle, History, LogOut,
-  Bell, Menu, X, Sun, Moon
+  Bell, Sun, Moon, PlusSquare, List, User
 } from 'lucide-react';
+import BottomNav from './BottomNav';
 
 /**
  * FacultyLayout – wraps every faculty page with a responsive sidebar + navbar.
@@ -54,13 +55,8 @@ const FacultyLayout = ({ children }) => {
         />
       )}
 
-      {/* Sidebar */}
       <div
-        className={`
-          fixed lg:static inset-y-0 left-0 z-40 lg:z-auto
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
+        className="hidden lg:block shrink-0"
       >
         <aside className="w-[260px] shrink-0 border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-screen relative z-20">
           {/* Logo */}
@@ -71,13 +67,6 @@ const FacultyLayout = ({ children }) => {
               </div>
               <span className="text-[19px] font-extrabold text-blue-500 tracking-tight">Attendify</span>
             </div>
-            {/* Close button (mobile) */}
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
           {/* Nav links */}
@@ -127,14 +116,12 @@ const FacultyLayout = ({ children }) => {
 
         {/* Navbar */}
         <header className="h-[60px] lg:h-[70px] bg-white dark:bg-slate-900 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 shrink-0 z-10 transition-colors duration-300">
-          {/* Hamburger */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Open menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="lg:hidden flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-blue-500 rounded-[10px] flex items-center justify-center shadow-md shadow-blue-500/20">
+               <span className="text-white font-black text-[14px]">A</span>
+            </div>
+            <span className="text-[16px] font-black text-blue-500 tracking-tight">Attendify</span>
+          </div>
           {/* Right side icons pushed to right on desktop */}
           <div className="flex items-center gap-3 sm:gap-5 ml-auto sm:ml-0 lg:ml-auto">
             
@@ -170,10 +157,18 @@ const FacultyLayout = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-transparent dark:bg-slate-900 transition-colors duration-300">
+        <main className="flex-1 overflow-y-auto bg-transparent dark:bg-slate-900 transition-colors duration-300 pb-24 lg:pb-0">
           {children}
         </main>
 
+        <BottomNav 
+          links={[
+            { to: '/faculty-dashboard', icon: LayoutDashboard, label: 'Home' },
+            { to: '/create-session', icon: PlusSquare, label: 'Create' },
+            { to: '/attendance-list', icon: List, label: 'History' },
+            { to: '/profile', icon: User, label: 'Profile' }
+          ]} 
+        />
       </div>
     </div>
   );

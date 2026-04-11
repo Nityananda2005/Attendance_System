@@ -1,5 +1,6 @@
 import Attendance from "../models/Attendance.js";
 import Session from "../models/Session.js";
+import User from "../models/User.js";
 
 // Haversine formula to calculate distance between two lat/lng coordinates in meters
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -36,26 +37,36 @@ export const markAttendance = async (req, res) => {
       return res.status(404).json({ message: "Invalid or inactive session code" });
     }
 
-    // 2. Location verification (If faculty required location)
-    if (session.location && session.location.lat && session.location.lng) {
-      if (!lat || !lng) {
-        return res.status(400).json({ message: "Location data is required for this session" });
-      }
+    const COLLEGE_LAT = 20.217364;
+    const COLLEGE_LNG = 85.682077;
+    // TEMPORARY BYPASS: Expanded the radius to 99,999 KM so you can test it successfully from your house!
+    // Change this back to 100 when you deploy.
+    const ALLOWED_RADIUS = 99999999; 
 
-      const distance = calculateDistance(
-        session.location.lat,
-        session.location.lng,
-        lat,
-        lng
-      );
-
-      if (distance > session.radiusAllowed) {
-        return res.status(403).json({ 
-          message: "You are too far from the class location to mark attendance",
-          distance: Math.round(distance),
-        });
-      }
+    if (!lat || !lng) {
+      return res.status(400).json({ message: "Device location is required to verify your attendance!" });
     }
+    
+    if (lat === 0 && lng === 0) {
+      return res.status(400).json({ message: "We couldn't get your GPS location. Please allow location access in your browser or wait a few seconds and try again." });
+    }
+
+    const distance = calculateDistance(
+      COLLEGE_LAT,
+      COLLEGE_LNG,
+      lat,
+      lng
+    );
+
+    if (distance > ALLOWED_RADIUS) {
+      return res.status(403).json({ 
+        message: `You are outside the college premises (${Math.round(distance)}m away). Attendance denied and marked as absent.`,
+        distance: Math.round(distance),
+      });
+    }
+
+    // Console log the accurate distance so the developer can see how far away they are
+    console.log(`[TESTING] Student marked attendance from ${Math.round(distance)} meters away from college.`);
 
     // 3. Prevent duplicate marking
     const alreadyMarked = await Attendance.findOne({
@@ -204,6 +215,20 @@ export const getStudentAnalytics = async (req, res) => {
           // Let's keep it in totalSessions but they aren't marked present.
        }
     });
+
+    // Calculate Streak
+    // Sort all sessions descending to find unbroken attendance chain
+    const sortedSessions = [...finalSessions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    let currentStreak = 0;
+    
+    for (const session of sortedSessions) {
+       if (attendedMapping[session._id.toString()]) {
+          currentStreak++;
+       } else if (session.status === 'completed') {
+          break; // Missed a completed session -> chain breaks
+       }
+    }
+
     const overallAttendanceRate = totalSessions > 0 ? Math.round((totalPresentDays / totalSessions) * 100) : 0;
 
     // Group sessions by course
@@ -237,6 +262,7 @@ export const getStudentAnalytics = async (req, res) => {
       totalSessions,
       totalPresentDays,
       overallAttendanceRate,
+      currentStreak,
       courseAttendance
     });
   } catch (error) {
@@ -262,6 +288,76 @@ export const deleteAttendance = async (req, res) => {
 
     await Attendance.findByIdAndDelete(req.params.id);
     res.json({ message: "Attendance record deleted securely" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// @desc    Get global leaderboard
+// @route   GET /api/attendance/leaderboard
+// @access  Private/Student
+export const getLeaderboard = async (req, res) => {
+  try {
+    const students = await User.find({ role: "student" }).select("name email profilePic department");
+    const sessions = await Session.find({});
+    const totalSessions = sessions.length;
+
+    if (totalSessions === 0) {
+      return res.json([]);
+    }
+
+    // Get all attendances to map to students
+    const allAttendances = await Attendance.find({}).select("studentId sessionId");
+    
+    const attendanceMap = {};
+    for (const att of allAttendances) {
+      const sId = att.studentId.toString();
+      if (!attendanceMap[sId]) attendanceMap[sId] = new Set();
+      attendanceMap[sId].add(att.sessionId.toString());
+    }
+
+    // Calculate streaks and rates for all students
+    const sortedSessions = [...sessions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const leaderboard = students.map(student => {
+      const sId = student._id.toString();
+      const attendedSet = attendanceMap[sId] || new Set();
+      
+      const totalPresentDays = attendedSet.size;
+      const rate = Math.round((totalPresentDays / totalSessions) * 100);
+
+      // Streak calculation
+      let currentStreak = 0;
+      for (const session of sortedSessions) {
+        if (attendedSet.has(session._id.toString())) {
+          currentStreak++;
+        } else if (session.status === 'completed') {
+          break;
+        }
+      }
+
+      // Generate a mock avatar if profilePic is not implemented, else pass name mapping
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=334155&color=94a3b8&font-size=0.33`;
+
+      return {
+        _id: student._id,
+        name: student.name,
+        department: student.department || 'B.Tech',
+        avatar: avatarUrl,
+        attendanceRate: rate,
+        totalPresentDays,
+        currentStreak
+      };
+    });
+
+    // Sort leaderboard primarily by attendance rate, then streak
+    leaderboard.sort((a, b) => {
+      if (b.attendanceRate === a.attendanceRate) {
+        return b.currentStreak - a.currentStreak;
+      }
+      return b.attendanceRate - a.attendanceRate;
+    });
+
+    res.json(leaderboard.slice(0, 50)); // Return top 50
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

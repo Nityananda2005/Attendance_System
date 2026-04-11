@@ -5,7 +5,7 @@ import api from '../../api/axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, Target, Sparkles, CheckCircle2, AlertTriangle, ArrowRight,
-  BookOpen, Book, QrCode, History, User, MoreVertical, MapPin
+  BookOpen, Book, QrCode, History, User, MoreVertical, MapPin, Flame
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -36,6 +36,7 @@ const Dashboard = () => {
   const overallRate = analytics?.overallAttendanceRate || 0;
   const presentLogs = analytics?.totalPresentDays || 0;
   const totalClasses = analytics?.totalSessions || 0;
+  const currentStreak = analytics?.currentStreak || 0;
   const lowAttendanceCourses = analytics?.courseAttendance?.filter(c => c.rate < 75) || [];
   const strokeOffset = 251.2 - (251.2 * (overallRate / 100));
   const recentTimeline = history.slice(0, 5);
@@ -60,7 +61,7 @@ const Dashboard = () => {
                 Student Dashboard
               </h1>
               <p className="text-[13px] sm:text-[14px] text-gray-500 dark:text-slate-400 font-medium">
-                Welcome back, <span className="text-gray-900 dark:text-white font-bold">{user?.name || 'Student'}</span>.
+                Welcome back, <span className="gradient-text font-black">{user?.name || 'Student'}</span>.
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -78,9 +79,9 @@ const Dashboard = () => {
           </div>
 
           {/* ── Overall Progress Card ── */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-8 border border-gray-100 dark:border-slate-700 shadow-sm mb-5 relative overflow-hidden">
-            <div className="absolute -right-16 -top-16 w-56 h-56 bg-blue-50 dark:bg-blue-500/10 rounded-full blur-3xl opacity-40 pointer-events-none" />
-            <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 mb-5 relative overflow-hidden group">
+            <div className="absolute right-[-20%] top-[-50%] w-[80%] h-[150%] bg-gradient-to-l from-blue-500/10 via-cyan-400/5 to-transparent rounded-full blur-3xl opacity-50 pointer-events-none group-hover:opacity-70 transition-opacity duration-700" />
+            <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
               {/* Circular Progress */}
               <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -129,15 +130,16 @@ const Dashboard = () => {
           </div>
 
           {/* ── Quick Stats ── */}
-          <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             {[
-              { label: 'Present', value: presentLogs, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-100 dark:border-green-500/20' },
-              { label: 'Total', value: totalClasses, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-100 dark:border-blue-500/20' },
-              { label: 'Absent', value: Math.max(0, totalClasses - presentLogs), color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10', border: 'border-red-100 dark:border-red-500/20' },
-            ].map(({ label, value, color, bg, border }) => (
-              <div key={label} className={`${bg} border ${border} rounded-2xl p-3 sm:p-4 text-center`}>
-                <p className={`text-xl sm:text-2xl font-black ${color}`}>{value}</p>
-                <p className="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide mt-0.5">{label}</p>
+              { label: 'Present', value: presentLogs, color: 'text-green-500 dark:text-green-400', border: 'border-green-100 dark:border-green-500/20', bg: 'bg-green-50/50 dark:bg-green-500/10' },
+              { label: 'Absent', value: Math.max(0, totalClasses - presentLogs), color: 'text-red-500', border: 'border-red-100 dark:border-red-500/20', bg: 'bg-red-50/50 dark:bg-red-500/10' },
+              { label: 'Streak', value: <span className="flex items-center gap-1 justify-center">{currentStreak} <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" /></span>, color: 'text-orange-500', border: 'border-orange-100 dark:border-orange-500/20', bg: 'bg-orange-50/50 dark:bg-orange-500/10' },
+              { label: 'Total Logs', value: totalClasses, color: 'text-blue-500 dark:text-blue-400', border: 'border-blue-100 dark:border-blue-500/20', bg: 'bg-blue-50/50 dark:bg-blue-500/10' },
+            ].map(({ label, value, color, border, bg }) => (
+              <div key={label} className={`glass-card p-4 text-center ${border} ${bg} hover:scale-[1.02] transition-transform`}>
+                <p className={`text-2xl sm:text-[28px] font-black ${color}`}>{value}</p>
+                <p className="text-[10px] sm:text-[11px] font-extrabold text-gray-500 dark:text-slate-400 uppercase tracking-widest mt-1">{label}</p>
               </div>
             ))}
           </div>
@@ -158,10 +160,10 @@ const Dashboard = () => {
               </div>
 
               {/* Subject Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {analytics?.courseAttendance?.length > 0 ? (
                   analytics.courseAttendance.map((course, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-4 sm:p-5 shadow-sm">
+                    <div key={idx} className="glass-card p-5 group hover:border-blue-500/30 dark:hover:border-blue-400/50 transition-all">
                       <div className="flex justify-between items-start mb-3">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${course.rate >= 75 ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-500 dark:text-blue-400' : 'bg-red-50 dark:bg-red-500/10 text-red-500'}`}>
                           <Book className="w-4 h-4" />
@@ -225,11 +227,11 @@ const Dashboard = () => {
             </div>
 
             {/* Right: Widgets */}
-            <div className="space-y-5">
+            <div className="space-y-4">
 
               {/* Recent Activity */}
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
-                <h3 className="text-[14px] font-bold text-gray-800 dark:text-slate-200 flex items-center gap-2 mb-4">
+              <div className="glass-card p-6">
+                <h3 className="text-[14px] font-black tracking-wide text-gray-800 dark:text-slate-200 flex items-center gap-2 mb-5 uppercase">
                   <History className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                   Recent Activity
                 </h3>
@@ -267,7 +269,7 @@ const Dashboard = () => {
 
               {/* Alerts */}
               {lowAttendanceCourses.length > 0 ? (
-                <div className="bg-red-50 dark:bg-red-500/10/60 border border-red-100 dark:border-red-500/20 rounded-2xl overflow-hidden">
+                <div className="glass-card overflow-hidden !bg-red-50/50 dark:!bg-red-500/5 border-red-200 dark:border-red-500/20">
                   <div className="bg-red-100/60 px-4 py-3 border-b border-red-100 dark:border-red-500/20 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-500" />
                     <span className="text-[10px] font-extrabold text-red-500 uppercase tracking-widest">Low Attendance</span>
@@ -283,8 +285,8 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="bg-green-50 dark:bg-green-500/10/60 border border-green-100 dark:border-green-500/20 rounded-2xl overflow-hidden">
-                  <div className="bg-green-100/60 px-4 py-3 border-b border-green-100 dark:border-green-500/20 flex items-center gap-2">
+                <div className="glass-card overflow-hidden !bg-green-50/50 dark:!bg-green-500/5 border-green-200 dark:border-green-500/20">
+                  <div className="bg-green-100/50 dark:bg-green-500/10 px-4 py-3 border-b border-green-200 dark:border-green-500/20 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                     <span className="text-[10px] font-extrabold text-green-600 uppercase tracking-widest">All Clear</span>
                   </div>
@@ -295,8 +297,8 @@ const Dashboard = () => {
               )}
 
               {/* Support */}
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
-                <h4 className="text-[10px] font-extrabold text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-2">Academic Support</h4>
+              <div className="glass-card p-5">
+                <h4 className="text-[10px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-2">Academic Support</h4>
                 <p className="text-[12px] text-gray-500 dark:text-slate-400 font-medium mb-3 leading-relaxed">
                   Issues with attendance marking? Contact your department coordinator.
                 </p>

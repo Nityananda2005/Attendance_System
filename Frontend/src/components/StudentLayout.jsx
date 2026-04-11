@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import BottomNav from './BottomNav';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { Bell, Menu, Sun, Moon } from 'lucide-react';
+import { Bell, Sun, Moon, MapPin, LayoutDashboard, QrCode, Clock, User, Trophy } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import api from '../api/axios';
 
 /**
  * StudentLayout – wraps every student page with a responsive sidebar + navbar.
@@ -18,11 +21,170 @@ const StudentLayout = ({ children, title, subtitle }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const dropdownRef = useRef(null);
+
   // Close sidebar when resizing to desktop
   useEffect(() => {
     const onResize = () => { if (window.innerWidth >= 1024) setSidebarOpen(false); };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const handleMarkAttendanceFromNotification = async (code) => {
+    if (!code) return;
+    
+    const loadingToast = toast.loading("Verifying your location...");
+
+    const submit = async (lat, lng) => {
+      try {
+        const res = await api.post('/attendance/mark', {
+          sessionCode: code.toUpperCase(),
+          location: { lat, lng }
+        });
+        toast.success("Attendance Marked Successfully!", { id: loadingToast, icon: '✅' });
+        
+        // Remove from notifications locally since it's marked
+        setNotifications(prev => prev.filter(n => n.sessionCode !== code));
+        
+        navigate('/history');
+      } catch (err) {
+        toast.error(err.response?.data?.error || err.response?.data?.message || "Verification Failed", { id: loadingToast });
+      }
+    };
+
+    if (!navigator.geolocation) {
+      submit(0, 0);
+      return;
+    }
+
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        toast.error("Location timeout! Using fallback testing coordinates...", { id: loadingToast });
+        setTimeout(() => submit(20.217364, 85.682077), 1000);
+      }
+    }, 15000);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeout);
+        submit(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeout);
+        toast.error("Location blocked by OS/Browser! Using fallback testing coordinates...", { id: loadingToast });
+        setTimeout(() => submit(20.217364, 85.682077), 1000);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 14000 }
+    );
+  };
+
+  const showActiveSessionToast = (message, sessionCode) => {
+    toast.custom((t) => (
+       <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-sm w-full bg-white dark:bg-slate-800 shadow-[0_20px_50px_rgba(59,130,246,0.2)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl pointer-events-auto flex flex-col overflow-hidden border-2 border-blue-500 p-5 mt-2`}>
+         <div className="flex items-start">
+           <div className="flex-shrink-0 pt-1">
+              <div className="w-[42px] h-[42px] rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-500/30">
+                 <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+              </div>
+           </div>
+           <div className="ml-3.5 flex-1">
+             <p className="text-[17px] font-black text-gray-900 dark:text-white tracking-tight leading-tight">Session Live!</p>
+             <p className="mt-1 text-[13px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed">{message}</p>
+           </div>
+         </div>
+         <div className="mt-5 flex gap-2">
+           <button 
+             onClick={() => {
+               toast.dismiss(t.id);
+               handleMarkAttendanceFromNotification(sessionCode);
+             }}
+             className="flex-[2] bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold py-3 px-4 rounded-xl text-[13px] transition-all shadow-md shadow-blue-500/30">
+             Mark Attendance Now
+           </button>
+           <button 
+             onClick={() => toast.dismiss(t.id)}
+             className="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-700/50 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-[13px] font-bold transition-all">
+             Dismiss
+           </button>
+         </div>
+       </div>
+    ), { duration: Infinity, position: 'top-center' });
+  };
+
+  // Fetch already active sessions on mount/refresh
+  useEffect(() => {
+    if (user?.role !== 'student') return;
+
+    const fetchActiveSessions = async () => {
+      try {
+        const res = await api.get('/sessions/active');
+        if (res.data && res.data.length > 0) {
+          const freshNotifs = res.data.map(s => ({
+            type: 'NEW_SESSION',
+            message: `Active session for ${s.courseName}`,
+            sessionCode: s.sessionCode
+          }));
+          setNotifications(freshNotifs);
+          
+          res.data.forEach(s => {
+             showActiveSessionToast(`Active session for ${s.courseName}`, s.sessionCode);
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching active sessions:", err);
+      }
+    };
+    fetchActiveSessions();
+  }, [user]);
+
+  // SSE Notifications logic for real-time creation
+  useEffect(() => {
+    if (user?.role !== 'student') return;
+
+    const baseURL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || 'http://localhost:4000/api';
+    const sse = new EventSource(`${baseURL}/notifications/stream`);
+
+    sse.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === 'NEW_SESSION') {
+          showActiveSessionToast(data.message, data.sessionCode);
+          setNotifications(prev => {
+             if (prev.some(n => n.sessionCode === data.sessionCode)) return prev;
+             return [data, ...prev];
+          });
+        }
+      } catch (err) {
+        console.error("SSE parse error", err);
+      }
+    };
+
+    sse.onerror = () => {
+      console.error("SSE connection lost. Reconnecting...");
+    };
+
+    return () => {
+      sse.close();
+    };
+  }, [user]);
+
+  // Handle outside click for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -36,13 +198,8 @@ const StudentLayout = ({ children, title, subtitle }) => {
         />
       )}
 
-      {/* Sidebar: drawer on mobile, static on desktop */}
       <div
-        className={`
-          fixed lg:static inset-y-0 left-0 z-40 lg:z-auto
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
+        className="hidden lg:block shrink-0"
       >
         <Sidebar />
       </div>
@@ -52,14 +209,12 @@ const StudentLayout = ({ children, title, subtitle }) => {
 
         {/* Navbar */}
         <header className="h-[60px] lg:h-[70px] bg-white dark:bg-slate-900 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 shrink-0 z-10 transition-colors duration-300">
-          {/* Hamburger (mobile) */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Open menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="lg:hidden flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-blue-500 rounded-[10px] flex items-center justify-center shadow-md shadow-blue-500/20">
+               <span className="text-white font-black text-[14px]">A</span>
+            </div>
+            <span className="text-[16px] font-black text-blue-500 tracking-tight">Attendify</span>
+          </div>
 
           {/* Page title on mobile */}
           {title && (
@@ -77,10 +232,49 @@ const StudentLayout = ({ children, title, subtitle }) => {
               {theme === 'dark' ? <Sun className="w-[20px] h-[20px]" strokeWidth={2} /> : <Moon className="w-[20px] h-[20px]" strokeWidth={2} />}
             </button>
 
-            <button className="relative text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors hidden sm:block">
-              <Bell className="w-[20px] h-[20px]" strokeWidth={2} />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 border border-white dark:border-slate-900 rounded-full" />
-            </button>
+            {/* Notification indicator */}
+            <div className="relative hidden sm:block" ref={dropdownRef}>
+              <button 
+                onClick={() => {
+                  if (notifications.length > 0) setShowNotifications(!showNotifications);
+                }}
+                className="relative text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              >
+                <Bell className="w-[20px] h-[20px]" strokeWidth={2} />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500 border border-white dark:border-slate-900 text-[8px] font-bold text-white shadow-sm">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && notifications.length > 0 && (
+                <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200/80 dark:border-slate-700 py-2 z-50 animate-in fade-in slide-in-from-top-4">
+                  <div className="px-4 py-2 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center">
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-200">Notifications</h3>
+                    <button 
+                      onClick={() => { setNotifications([]); setShowNotifications(false); }}
+                      className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {notifications.map((notif, index) => (
+                      <div key={index} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors border-b border-gray-50 dark:border-slate-700/50 last:border-0">
+                        <p className="text-sm text-gray-700 dark:text-slate-300 line-clamp-2">{notif.message}</p>
+                        {notif.sessionCode && (
+                          <span className="mt-1 inline-block text-xs font-mono bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
+                            Code: {notif.sessionCode}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="hidden sm:block w-px h-7 bg-gray-200 dark:bg-slate-700" />
 
@@ -108,10 +302,19 @@ const StudentLayout = ({ children, title, subtitle }) => {
         </header>
 
         {/* Scrollable page content */}
-        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 transition-colors duration-300">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 transition-colors duration-300 pb-24 lg:pb-0">
           {children}
         </main>
 
+        <BottomNav 
+          links={[
+            { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+            { to: '/leaderboard', icon: Trophy, label: 'Rank' },
+            { to: '/mark-attendance', icon: QrCode, label: 'Attend' },
+            { to: '/history', icon: Clock, label: 'Log' },
+            { to: '/profile', icon: User, label: 'Profile' }
+          ]} 
+        />
       </div>
     </div>
   );

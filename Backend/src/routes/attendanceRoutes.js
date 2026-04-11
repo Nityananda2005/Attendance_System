@@ -4,7 +4,8 @@ import {
   getSessionAttendance,
   getStudentHistory,
   getStudentAnalytics,
-  deleteAttendance
+  deleteAttendance,
+  getLeaderboard
 } from "../controllers/attendanceController.js";
 import { protect, facultyOnly } from "../middleware/authMiddleware.js";
 
@@ -14,6 +15,7 @@ router.post("/mark", protect, markAttendance);
 router.get("/session/:sessionId", protect, facultyOnly, getSessionAttendance);
 router.get("/student/history", protect, getStudentHistory);
 router.get("/student/analytics", protect, getStudentAnalytics);
+router.get("/leaderboard", protect, getLeaderboard);
 router.delete("/:id", protect, facultyOnly, deleteAttendance);
 
 export default router;

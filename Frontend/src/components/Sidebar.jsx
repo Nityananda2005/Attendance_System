@@ -5,7 +5,8 @@ import {
   ClipboardCheck, 
   History, 
   User, 
-  LogOut
+  LogOut,
+  Trophy
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -21,9 +22,9 @@ const Sidebar = () => {
   const getLinkClasses = (path) => {
     const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-xl mx-3 text-[14px] font-semibold transition-all ";
     if (path === currentPath || (currentPath === '/dashboard' && path === '/dashboard')) {
-      return baseClasses + "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400";
+      return baseClasses + "bg-blue-50 dark:bg-slate-800/80 text-blue-600 dark:text-cyan-400 border border-blue-100 dark:border-cyan-500/20 shadow-sm";
     }
-    return baseClasses + "text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200";
+    return baseClasses + "text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200 border border-transparent";
   };
 
   const handleLogout = () => {
@@ -57,6 +58,10 @@ const Sidebar = () => {
         <Link to="/history" className={getLinkClasses('/history')}>
           <History className="w-[18px] h-[18px] shrink-0" strokeWidth={2.5} />
           History
+        </Link>
+        <Link to="/leaderboard" className={getLinkClasses('/leaderboard')}>
+          <Trophy className="w-[18px] h-[18px] shrink-0" strokeWidth={2.5} />
+          Leaderboard
         </Link>
         <Link to="/profile" className={getLinkClasses('/profile')}>
           <User className="w-[18px] h-[18px] shrink-0" strokeWidth={2.5} />

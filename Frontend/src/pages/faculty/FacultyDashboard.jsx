@@ -14,7 +14,7 @@ import {
 
 const StudentRow = ({ name, id, time, loc, verified, image }) => {
   return (
-    <tr className="hover:bg-gray-50 dark:bg-slate-800/50/50 transition-colors">
+    <tr className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border-b border-gray-100 dark:border-slate-800">
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-3.5">
           <div className="w-[34px] h-[34px] rounded-full overflow-hidden bg-gray-100 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-700 shadow-sm">
@@ -78,6 +78,7 @@ const FacultyDashboard = () => {
         }
       } catch (error) {
         console.error("Dashboard fetch error:", error);
+        toast.error("Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
@@ -143,19 +144,24 @@ const FacultyDashboard = () => {
      }
   };
 
-  // Derive top stats
+  // Derive top stats with defensive checks
   let totalLogs = 0;
   let totalTarget = 0;
   let activeCount = 0;
 
-  sessions.forEach(s => {
-     totalLogs += s.presentCount || 0;
-     totalTarget += s.totalCount || 60; // Estimated 60 per class max
-     if (s.status === 'active') activeCount++;
-  });
+  if (Array.isArray(sessions)) {
+    sessions.forEach(s => {
+      if (!s) return;
+      totalLogs += s.presentCount || 0;
+      totalTarget += s.totalCount || 60; // Estimated 60 per class max
+      if (s.status === 'active') activeCount++;
+    });
+  }
 
   const avgAttendance = totalTarget > 0 ? ((totalLogs / totalTarget) * 100).toFixed(1) : 0;
-  const uniqueCourses = [...new Set(sessions.map(s => s.courseId))].length;
+  const uniqueCourses = Array.isArray(sessions) 
+    ? [...new Set(sessions.map(s => s?.courseId).filter(Boolean))].length 
+    : 0;
 
   if (loading) {
     return (

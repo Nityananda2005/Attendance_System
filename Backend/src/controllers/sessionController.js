@@ -1,6 +1,7 @@
 import Session from "../models/Session.js";
 import Attendance from "../models/Attendance.js";
 import crypto from "crypto";
+import { sendNotificationToStudents } from "../utils/sseProvider.js";
 
 // @desc    Create a new session (Faculty only)
 // @route   POST /api/sessions
@@ -22,6 +23,12 @@ export const createSession = async (req, res) => {
       radiusAllowed: radiusAllowed || 50,
       department: department || req.user.department,
       semester: semester || req.user.semester,
+    });
+
+    sendNotificationToStudents({
+      type: "NEW_SESSION",
+      message: `A new session for ${courseName} has been created!`,
+      sessionCode
     });
 
     res.status(201).json(session);
@@ -83,6 +90,27 @@ export const verifySessionCode = async (req, res) => {
       topic: session.topic,
       facultyId: session.facultyId,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get current active sessions for a student
+// @route   GET /api/sessions/active
+// @access  Private
+export const getActiveSessions = async (req, res) => {
+  try {
+    const sessions = await Session.find({ status: "active" }).sort({ createdAt: -1 });
+    
+    // Optional: filter out sessions the student has already attended
+    const attendedRecords = await Attendance.find({ studentId: req.user._id }).select("sessionId");
+    const attendedIds = attendedRecords.map(r => r.sessionId.toString());
+
+    const unMarkedSessions = sessions.filter(
+       s => !attendedIds.includes(s._id.toString())
+    );
+
+    res.json(unMarkedSessions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

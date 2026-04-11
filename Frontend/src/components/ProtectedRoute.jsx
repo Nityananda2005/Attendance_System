@@ -14,10 +14,13 @@ const ProtectedRoute = ({ children, allowedRole }) => {
     return <Navigate to="/" replace />;
   }
 
-  // If route requires a specific role and user doesn't match
-  if (allowedRole && user.role.toLowerCase() !== allowedRole.toLowerCase()) {
-    // Redirect to their respective dashboard
-    return <Navigate to={user.role.toLowerCase() === 'faculty' ? "/faculty-dashboard" : "/dashboard"} replace />;
+  // If route requires specific roles
+  if (allowedRole) {
+    const roles = Array.isArray(allowedRole) ? allowedRole : [allowedRole];
+    if (!roles.some(role => role.toLowerCase() === user.role.toLowerCase())) {
+      // Redirect to their respective dashboard
+      return <Navigate to={user.role.toLowerCase() === 'faculty' ? "/faculty-dashboard" : "/dashboard"} replace />;
+    }
   }
 
   return children;
