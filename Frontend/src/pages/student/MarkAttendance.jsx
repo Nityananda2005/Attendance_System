@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 import StudentLayout from '../../components/StudentLayout';
 import api from '../../api/axios';
 import { toast } from 'react-hot-toast';
@@ -9,10 +10,36 @@ import {
 import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
 
 const MarkAttendance = () => {
+  const { user } = useContext(AuthContext);
   const [sessionCode, setSessionCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+
+  const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
+  const isProfileIncomplete = user?.role === 'student' && requiredFields.some(f => !user[f] || user[f].toString().trim() === '');
+
+  if (isProfileIncomplete) {
+    return (
+      <StudentLayout title="Access Locked">
+        <div className="max-w-xl mx-auto px-4 py-20 text-center">
+          <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-rose-500/10">
+            <AlertCircle className="w-10 h-10 text-rose-500" strokeWidth={1.5} />
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-3">Attendance Locked</h2>
+          <p className="text-gray-500 dark:text-slate-400 font-medium mb-8">
+            You must complete your profile details (Batch/Section, Residence, and Phone) before you can mark your attendance for any session.
+          </p>
+          <button 
+            onClick={() => navigate('/profile')}
+            className="px-8 py-3.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all"
+          >
+            Go to Profile
+          </button>
+        </div>
+      </StudentLayout>
+    );
+  }
 
   const submitAttendance = async (code, location = null) => {
     if (!code) return toast.error("Session Code is required");

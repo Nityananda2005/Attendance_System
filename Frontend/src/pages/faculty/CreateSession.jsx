@@ -119,15 +119,33 @@ const CreateSession = () => {
                        </div>
 
                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                         <div>
-                           <label className="block text-[13px] font-extrabold text-gray-700 dark:text-slate-300 mb-2">Target Department</label>
-                           <input type="text" value={department} onChange={e => setDepartment(e.target.value)} placeholder="e.g. Computer Science" className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"/>
-                         </div>
-                         <div>
-                           <label className="block text-[13px] font-extrabold text-gray-700 dark:text-slate-300 mb-2">Target Semester</label>
-                           <input type="text" value={semester} onChange={e => setSemester(e.target.value)} placeholder="e.g. 4th" className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"/>
-                         </div>
-                       </div>
+                          <div>
+                            <label className="block text-[13px] font-extrabold text-gray-700 dark:text-slate-300 mb-2">Target Department</label>
+                            <select 
+                              value={department} 
+                              onChange={e => setDepartment(e.target.value)} 
+                              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            >
+                              <option value="">Select Department...</option>
+                              {(Array.isArray(user?.department) ? user.department : (user?.department ? [user.department] : [])).map(dept => (
+                                <option key={dept} value={dept}>{dept}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[13px] font-extrabold text-gray-700 dark:text-slate-300 mb-2">Target Semester</label>
+                            <select 
+                              value={semester} 
+                              onChange={e => setSemester(e.target.value)} 
+                              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                            >
+                              <option value="">Select Semester...</option>
+                              {['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'].map(sem => (
+                                <option key={sem} value={sem}>{sem}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
 
                        <div className="pt-2">
                          <div className="flex items-center justify-between mb-4">

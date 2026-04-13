@@ -38,8 +38,10 @@ const sessionSchema = new mongoose.Schema(
       default: 50, // Defaults to 50 meters
     },
     department: {
-      type: String,
+      type: [String],
+      default: [],
     },
+
     semester: {
       type: String,
     },

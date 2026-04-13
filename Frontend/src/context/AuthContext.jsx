@@ -28,10 +28,10 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setToken(token);
       
+      
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
       
-      toast.success('Logged in successfully!');
       return userData; // Returning to component so it can redirect based on role
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
@@ -63,11 +63,16 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    toast.success('Logged out');
+  };
+
+  const updateUser = (newData) => {
+    const updatedUser = { ...user, ...newData };
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, loginAction, registerAction, logoutAction }}>
+    <AuthContext.Provider value={{ user, token, loading, loginAction, registerAction, logoutAction, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,9 +1,11 @@
-import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const ProtectedRoute = ({ children, allowedRole }) => {
   const { user, token, loading } = useContext(AuthContext);
+  const location = useLocation();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -12,6 +14,17 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   // If there's no token or user, go to splash page
   if (!token || !user) {
     return <Navigate to="/" replace />;
+  }
+
+  // Check for profile completion for Students
+  if (user.role === 'student' && location.pathname !== '/profile') {
+    const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
+    const isComplete = requiredFields.every(field => user[field] && user[field].toString().trim() !== '');
+    
+    if (!isComplete) {
+      toast.error("Please complete your profile details first!", { id: 'profile-warning' });
+      return <Navigate to="/profile" replace />;
+    }
   }
 
   // If route requires specific roles

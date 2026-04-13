@@ -10,15 +10,22 @@ const generateToken = (id) => {
 };
 
 export const registerUser = async (req, res) => {
-  const { name, email, password, role, enrollmentId } = req.body;
+  const { name, email, password, role, enrollmentId, department, semester } = req.body;
 
   try {
-    if (!name || !email || !password || !role) {
+    if (!name || !email || !password) {
       return res.status(400).json({ message: "Please enter all fields" });
     }
 
-    const userExists = await User.findOne({ email });
+    // Force role to student for public registration
+    const userRole = "student";
+    
+    // Explicitly reject non-student roles
+    if (role && role !== "student") {
+       return res.status(403).json({ message: "Registering as Faculty or Admin is restricted. Contact the Administrator." });
+    }
 
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -32,8 +39,10 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role,
-      enrollmentId: role === "student" && enrollmentId?.trim() ? enrollmentId.trim() : undefined,
+      role: userRole,
+      enrollmentId: enrollmentId?.trim() || `STU-${Math.random().toString(36).substring(7).toUpperCase()}`,
+      department,
+      semester
     });
 
     if (user) {
@@ -42,6 +51,13 @@ export const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        enrollmentId: user.enrollmentId,
+        department: user.department,
+        semester: user.semester,
+        batchSection: user.batchSection,
+        residence: user.residence,
+        phone: user.phone,
+        emergencyContact: user.emergencyContact,
         token: generateToken(user._id),
       });
     } else {
@@ -64,10 +80,17 @@ export const loginUser = async (req, res) => {
 
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
-        _id: user.id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        enrollmentId: user.enrollmentId,
+        department: user.department,
+        semester: user.semester,
+        batchSection: user.batchSection,
+        residence: user.residence,
+        phone: user.phone,
+        emergencyContact: user.emergencyContact,
         token: generateToken(user._id),
       });
     } else {
@@ -92,7 +115,7 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { department, batchSection, semester, residence, phone, emergencyContact, name } = req.body;
+    const { department, batchSection, semester, residence, phone, emergencyContact, name, enrollmentId } = req.body;
     
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -100,12 +123,14 @@ export const updateProfile = async (req, res) => {
     }
 
     if (name) user.name = name;
+    if (enrollmentId !== undefined) user.enrollmentId = enrollmentId;
     if (department !== undefined) user.department = department;
     if (batchSection !== undefined) user.batchSection = batchSection;
     if (semester !== undefined) user.semester = semester;
     if (residence !== undefined) user.residence = residence;
     if (phone !== undefined) user.phone = phone;
     if (emergencyContact !== undefined) user.emergencyContact = emergencyContact;
+
 
     const updatedUser = await user.save();
 

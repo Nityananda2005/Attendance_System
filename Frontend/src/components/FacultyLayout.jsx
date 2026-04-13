@@ -89,7 +89,7 @@ const FacultyLayout = ({ children }) => {
 
           {/* User + Logout */}
           <div className="p-4 mb-2 space-y-2">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700">
+            <Link to="/faculty-profile" className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
               <img
                 src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Faculty')}&background=${theme === 'dark' ? '334155' : 'eff6ff'}&color=${theme === 'dark' ? '94a3b8' : '1d4ed8'}&font-size=0.33`}
                 alt="avatar"
@@ -99,7 +99,7 @@ const FacultyLayout = ({ children }) => {
                 <p className="text-[13px] font-bold text-gray-800 dark:text-slate-200 truncate">{user?.name || 'Faculty'}</p>
                 <p className="text-[11px] text-gray-400 dark:text-slate-500 font-medium">Faculty</p>
               </div>
-            </div>
+            </Link>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all"
@@ -138,21 +138,21 @@ const FacultyLayout = ({ children }) => {
               <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 border border-white dark:border-slate-900 rounded-full" />
             </button>
             <div className="hidden sm:block w-px h-7 bg-gray-200 dark:bg-slate-700" />
-            <div className="flex items-center gap-2.5">
+            <Link to="/faculty-profile" className="flex items-center gap-2.5 cursor-pointer group">
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-[13px] font-bold text-gray-800 dark:text-slate-200 leading-tight max-w-[140px] truncate">
+                <span className="text-[13px] font-bold text-gray-800 dark:text-slate-200 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors max-w-[140px] truncate">
                   {user?.name || 'Faculty Member'}
                 </span>
                 <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wider">Faculty</span>
               </div>
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 overflow-hidden shadow-sm shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 overflow-hidden shadow-sm shrink-0 group-hover:ring-2 group-hover:ring-blue-400 transition-all">
                 <img
                   src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Faculty')}&background=${theme === 'dark' ? '334155' : 'eff6ff'}&color=${theme === 'dark' ? '94a3b8' : '1d4ed8'}&font-size=0.33`}
                   alt="Avatar"
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -166,7 +166,7 @@ const FacultyLayout = ({ children }) => {
             { to: '/faculty-dashboard', icon: LayoutDashboard, label: 'Home' },
             { to: '/create-session', icon: PlusSquare, label: 'Create' },
             { to: '/attendance-list', icon: List, label: 'History' },
-            { to: '/profile', icon: User, label: 'Profile' }
+            { to: '/faculty-profile', icon: User, label: 'Profile' }
           ]} 
         />
       </div>

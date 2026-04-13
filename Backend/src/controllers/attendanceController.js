@@ -1,6 +1,7 @@
 import Attendance from "../models/Attendance.js";
 import Session from "../models/Session.js";
 import User from "../models/User.js";
+import { isMatchingSession } from "../utils/sessionMatchers.js";
 
 // Haversine formula to calculate distance between two lat/lng coordinates in meters
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -33,12 +34,38 @@ export const markAttendance = async (req, res) => {
   const lng = location?.lng;
 
   try {
+    // 0. Ensure student's profile is complete
+    const student = await User.findById(req.user._id);
+    const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
+    const isIncomplete = requiredFields.some(field => !student[field] || student[field].toString().trim() === '');
+    
+    if (isIncomplete) {
+      return res.status(403).json({ 
+        message: "Attendance locked. Please complete your profile details (Department, Semester, Batch, Residence, Phone) first." 
+      });
+    }
+
     // 1. Verify session constraints
     const session = await Session.findOne({ sessionCode, status: "active" });
 
     if (!session) {
       return res.status(404).json({ message: "Invalid or inactive session code" });
     }
+
+
+    // 2. NEW: Branch & Semester Lock Verification (using consolidated helper)
+    const canMark = isMatchingSession(student, session);
+
+    if (!canMark) {
+      const studentDepts = (Array.isArray(student.department) ? student.department : [student.department]);
+      const sessionDepts = (Array.isArray(session.department) ? session.department : [session.department]);
+      return res.status(403).json({ 
+        message: `Access Denied: This session is for ${sessionDepts.join(', ')} (${session.semester || 'All Sem'}). Your profile says ${studentDepts.join(', ')} (${student.semester || 'None'}).` 
+      });
+    }
+
+
+
 
     // Geolocation verification is currently DISBLED as per user request
     const geofenceEnabled = false; 
@@ -123,8 +150,10 @@ export const getStudentHistory = async (req, res) => {
 
     const attendedCourseIds = [...new Set(attendedRecords.map(r => r.sessionId?.courseId).filter(Boolean))];
 
-    // As requested: EVERY created session globally is tracked for every student
-    let allExpectedSessions = await Session.find({}).populate({ path: "facultyId", select: "name" });
+    // Filter sessions using the robust helper
+    const allSessions = await Session.find({}).populate({ path: "facultyId", select: "name" });
+    const allExpectedSessions = allSessions.filter(s => isMatchingSession(req.user, s));
+
 
     const historyList = [];
     const attendedMapping = {};
@@ -172,8 +201,10 @@ export const getStudentAnalytics = async (req, res) => {
     const attendedRecords = await Attendance.find({ studentId }).populate("sessionId");
     const attendedCourseIds = [...new Set(attendedRecords.map(r => r.sessionId?.courseId).filter(Boolean))];
 
-    // As requested: EVERY created session globally is tracked for every student
-    let finalSessions = await Session.find({});
+    // Consolidate analytics filtering with the same robust helper
+    const allSessions = await Session.find({}).populate({ path: "facultyId", select: "name" });
+    const finalSessions = allSessions.filter(s => isMatchingSession(req.user, s));
+
 
     if (finalSessions.length === 0) {
       return res.json({

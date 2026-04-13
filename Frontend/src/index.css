@@ -35,3 +35,14 @@
     @apply animate-[spin_20s_linear_infinite];
   }
 }
+
+@layer base {
+  input, select, textarea {
+    @apply dark:text-white;
+  }
+  
+  /* Optional: fix placeholder visibility in dark mode */
+  input::placeholder, textarea::placeholder {
+    @apply dark:text-slate-500;
+  }
+}

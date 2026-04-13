@@ -18,7 +18,9 @@ const Navbar = () => {
     if (user?.role !== 'student') return;
 
     const baseURL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || 'http://localhost:4000/api';
-    const sse = new EventSource(`${baseURL}/notifications/stream`);
+    const deptParam = Array.isArray(user?.department) ? user.department.join(',') : user?.department || '';
+    const semParam = user?.semester || '';
+    const sse = new EventSource(`${baseURL}/notifications/stream?department=${encodeURIComponent(deptParam)}&semester=${encodeURIComponent(semParam)}`);
 
     sse.onmessage = (e) => {
       try {

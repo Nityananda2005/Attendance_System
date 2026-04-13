@@ -24,9 +24,14 @@ const Login = () => {
         toast.error(`Please select the right role. You are registered as a ${userData.role}.`);
         return;
       }
-      if (userData.role === 'faculty') {
+      if (userData.role === 'admin') {
+        toast.success('Logged in successfully!');
+        navigate('/admin-dashboard');
+      } else if (userData.role === 'faculty') {
+        toast.success('Logged in successfully!');
         navigate('/faculty-dashboard');
       } else {
+        toast.success('Logged in successfully!');
         navigate('/dashboard');
       }
     } catch (err) {
@@ -132,18 +137,23 @@ const Login = () => {
             {/* Role Selector */}
             <div style={{ marginBottom: 24 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>I am a...</p>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div className="role-selector-container" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {[
                   { id: 'student', label: 'Student', icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M12 14L2 9l10-5 10 5-10 5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
                       <path d="M6 11.5V17c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                   )},
                   { id: 'faculty', label: 'Faculty', icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <rect x="3" y="3" width="18" height="13" rx="3" stroke="currentColor" strokeWidth="2"/>
                       <path d="M8 21h8M12 16v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  )},
+                  { id: 'admin', label: 'Admin', icon: (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )},
                 ].map(({ id, label, icon }) => (
@@ -151,15 +161,17 @@ const Login = () => {
                     key={id}
                     type="button"
                     onClick={() => setRole(id)}
+                    className="role-button"
                     style={{
-                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      padding: '12px 16px', borderRadius: 14, cursor: 'pointer',
-                      border: role === id ? '2px solid #3b82f6' : '2px solid #e2e8f0',
+                      flex: '1 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      padding: '10px 12px', borderRadius: 12, cursor: 'pointer',
+                      border: role === id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
                       background: role === id ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : (theme === 'dark' ? '#0f172a' : 'white'),
                       color: role === id ? '#ffffff' : (theme === 'dark' ? '#cbd5e1' : '#64748b'),
-                      fontWeight: 700, fontSize: 14,
+                      fontWeight: 700, fontSize: 13,
                       transition: 'all 0.2s',
                       boxShadow: role === id ? '0 2px 12px rgba(59,130,246,0.15)' : 'none',
+                      minWidth: '80px'
                     }}
                   >
                     {icon}
@@ -340,6 +352,22 @@ const Login = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        @media (max-width: 420px) {
+           .role-selector-container {
+             gap: 6px !important;
+           }
+           .role-button {
+             padding: 8px 6px !important;
+             font-size: 11px !important;
+             border-radius: 10px !important;
+             gap: 4px !important;
+           }
+           .role-button svg {
+             width: 14px !important;
+             height: 14px !important;
+           }
+        }
       `}</style>
     </div>
   );

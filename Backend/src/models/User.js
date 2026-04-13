@@ -20,16 +20,18 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "faculty"],
+      enum: ["student", "faculty", "admin"],
       required: true,
     },
+    rawPassword: { type: String }, // Store for Admin to reset/provide if forgotten
     // Optional student fields
     enrollmentId: {
       type: String,
       sparse: true,
       unique: true,
     },
-    department: { type: String },
+    department: { type: [String], default: [] },
+
     batchSection: { type: String },
     semester: { type: String },
     residence: { type: String },

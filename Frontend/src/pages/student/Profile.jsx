@@ -2,9 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../../api/axios';
 import { AuthContext } from '../../context/AuthContext';
 import StudentLayout from '../../components/StudentLayout';
-import FacultyLayout from '../../components/FacultyLayout';
+
 import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Pencil, ShieldCheck, Clock, AlertCircle, BookOpen, GraduationCap, 
   Users, CalendarDays, Hash, Mail, Phone, CheckCircle2, Award, Book, Save, X,
@@ -12,13 +12,19 @@ import {
 } from 'lucide-react';
 
 const Profile = () => {
-  const { user, logoutAction } = useContext(AuthContext);
-  const Layout = user?.role === 'faculty' ? FacultyLayout : StudentLayout;
-  const navigate = useNavigate();
+  const { user, logoutAction, updateUser } = useContext(AuthContext);
+  const Layout = StudentLayout;
+  const location = useLocation();
   const [profile, setProfile] = useState({});
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(location.state?.fromDashboard ? true : false);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({});
+
+  useEffect(() => {
+    if (location.state?.message) {
+      toast(location.state.message, { icon: 'ℹ️', duration: 4000 });
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -27,6 +33,7 @@ const Profile = () => {
         setProfile(res.data);
         setFormData({
           name: res.data.name || '',
+          enrollmentId: res.data.enrollmentId || '',
           department: res.data.department || '',
           batchSection: res.data.batchSection || '',
           semester: res.data.semester || '',
@@ -34,6 +41,7 @@ const Profile = () => {
           phone: res.data.phone || '',
           emergencyContact: res.data.emergencyContact || ''
         });
+
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -49,17 +57,71 @@ const Profile = () => {
     try {
       const res = await api.put('/auth/profile', formData);
       setProfile(res.data);
+      updateUser(res.data); // Update global AuthContext state
       toast.success('Profile updated successfully');
       setIsEditing(false);
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-      if (storedUser) localStorage.setItem('user', JSON.stringify({ ...storedUser, ...res.data }));
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update profile');
     }
   };
 
+  const BRANCHES = [
+    'Computer Science (CSE)',
+    'Information Technology (IT)',
+    'Artificial Intelligence (AI)',
+    'Data Science (DS)',
+    'Mechanical Engineering (ME)',
+    'Civil Engineering (CE)',
+
+    'Electrical Engineering (EE)',
+    'Electronics & Comm (ECE)',
+    'Chemical Engineering (CHE)',
+    'Architecture (B.Arch)',
+    'Other'
+  ];
+
+  const SEMESTERS = [
+    '1st',
+    '2nd',
+    '3rd',
+    '4th',
+    '5th',
+    '6th',
+    '7th',
+    '8th'
+  ];
+
+
   const renderField = (name, value, label) => {
     if (isEditing) {
+      if (name === 'department') {
+        return (
+          <select
+            name={name}
+            value={formData[name] || ''}
+            onChange={handleChange}
+            className="w-full bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 dark:text-slate-200 outline-none transition-all"
+          >
+            <option value="">Select Branch...</option>
+            {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+        );
+      }
+
+      if (name === 'semester') {
+        return (
+          <select
+            name={name}
+            value={formData[name] || ''}
+            onChange={handleChange}
+            className="w-full bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 dark:text-slate-200 outline-none transition-all"
+          >
+            <option value="">Select Semester...</option>
+            {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        );
+      }
+
       return (
         <input
           type="text"
@@ -74,6 +136,7 @@ const Profile = () => {
     return <p className="text-[13px] font-bold text-gray-800 dark:text-slate-200">{value || 'Not specified'}</p>;
   };
 
+
   if (loading) {
     return <Layout title="Profile">
         <div className="flex-1 flex items-center justify-center h-64">
@@ -85,6 +148,19 @@ const Profile = () => {
   return (
     <Layout title="Profile">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
+
+        {/* Warning Banner for Incomplete Profile */}
+        {user?.role === 'student' && !['department', 'semester', 'batchSection', 'residence', 'phone'].every(f => user[f]) && (
+          <div className="mb-6 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-2xl p-4 flex items-center gap-4 animate-pulse">
+            <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/20">
+              <AlertCircle className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="text-[14px] font-bold text-rose-600 dark:text-rose-400">Profile Incomplete</h3>
+              <p className="text-[12px] font-medium text-rose-500/80">Please fill in your academic and contact details to unlock the dashboard.</p>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -164,7 +240,7 @@ const Profile = () => {
                  <div className="w-full space-y-2.5">
                    <div className="flex items-center justify-between">
                      <span className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold">
-                       {user?.role === 'faculty' ? 'Faculty ID' : 'Student ID'}
+                       {user?.role === 'faculty' ? 'Faculty ID' : 'Reg / Roll Number'}
                      </span>
                      <span className="text-[12px] text-gray-900 dark:text-white font-bold">{profile.enrollmentId || profile.facultyId || 'N/A'}</span>
                    </div>
@@ -236,8 +312,9 @@ const Profile = () => {
                     { icon: GraduationCap, label: 'BRANCH / DEPARTMENT', name: 'department', value: profile.department },
                     { icon: Users, label: 'BATCH & SECTION', name: 'batchSection', value: profile.batchSection },
                     { icon: CalendarDays, label: 'CURRENT SEMESTER', name: 'semester', value: profile.semester },
-                    { icon: Hash, label: 'ENROLLMENT NUMBER', value: profile.enrollmentId, fixed: true },
+                    { icon: Hash, label: 'REGISTRATION / ROLL NUMBER', name: 'enrollmentId', value: profile.enrollmentId },
                   ].map(({ icon: Icon, label, name, value, fixed }) => (
+
                     <div key={label} className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
                         <Icon className="w-4 h-4 text-blue-500 dark:text-blue-400" strokeWidth={2} />

@@ -149,19 +149,18 @@ const FacultyDashboard = () => {
   let totalTarget = 0;
   let activeCount = 0;
 
-  if (Array.isArray(sessions)) {
-    sessions.forEach(s => {
-      if (!s) return;
-      totalLogs += s.presentCount || 0;
-      totalTarget += s.totalCount || 60; // Estimated 60 per class max
-      if (s.status === 'active') activeCount++;
-    });
-  }
+  const validSessions = Array.isArray(sessions) ? sessions : [];
 
-  const avgAttendance = totalTarget > 0 ? ((totalLogs / totalTarget) * 100).toFixed(1) : 0;
-  const uniqueCourses = Array.isArray(sessions) 
-    ? [...new Set(sessions.map(s => s?.courseId).filter(Boolean))].length 
-    : 0;
+  validSessions.forEach(s => {
+    if (!s) return;
+    totalLogs += Number(s.presentCount) || 0;
+    totalTarget += Number(s.totalCount) || 0; 
+    if (s.status === 'active') activeCount++;
+  });
+
+  const avgAttendance = totalTarget > 0 ? ((totalLogs / totalTarget) * 100).toFixed(1) : "0.0";
+  const uniqueCourses = [...new Set(validSessions.map(s => s?.courseId).filter(Boolean))].length;
+
 
   if (loading) {
     return (
@@ -269,7 +268,7 @@ const FacultyDashboard = () => {
                         <p className="text-[11px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Time Elapsed</p>
                       </div>
                       <div className="bg-[#f8fafc] dark:bg-slate-900 border border-gray-100 dark:border-slate-700 rounded-2xl p-7 flex flex-col items-center justify-center text-center">
-                        <h4 className="text-[40px] font-black text-gray-900 dark:text-white tracking-tighter mb-2 leading-none">{liveStudents.length}/{activeSession.totalCount || 60}</h4>
+                        <h4 className="text-[40px] font-black text-gray-900 dark:text-white tracking-tighter mb-2 leading-none">{liveStudents.length}/{activeSession.totalCount || 0}</h4>
                         <p className="text-[11px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Students Present</p>
                       </div>
                     </div>

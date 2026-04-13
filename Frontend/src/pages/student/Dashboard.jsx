@@ -9,29 +9,55 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const [analytics, setAnalytics] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    // 1. Check if profile is complete
+    const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
+    const isProfileIncomplete = !user || requiredFields.some(field => {
+      const val = user[field];
+      return !val || (Array.isArray(val) ? val.length === 0 : val.toString().trim() === '');
+    });
+
+    if (isProfileIncomplete) {
+      // Small toast or notification could be added here
+      navigate('/profile', { 
+        state: { 
+          fromDashboard: true, 
+          message: 'Complete your profile to unlock all dashboard features.' 
+        } 
+      });
+      return;
+    }
+
+    // 2. Fetch data if profile is complete
     const fetchDashboardData = async () => {
       try {
+        setLoading(true);
         const [analyticsRes, historyRes] = await Promise.all([
           api.get('/attendance/student/analytics'),
           api.get('/attendance/student/history')
         ]);
         setAnalytics(analyticsRes.data);
         setHistory(historyRes.data);
+        setError(null);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        setError("Failed to load dashboard data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchDashboardData();
-  }, []);
+  }, [user, authLoading, navigate]);
 
   const overallRate = analytics?.overallAttendanceRate || 0;
   const presentLogs = analytics?.totalPresentDays || 0;
@@ -49,6 +75,22 @@ const Dashboard = () => {
           <div className="flex flex-col items-center gap-4">
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-[13px] font-semibold text-gray-400 dark:text-slate-500">Loading your dashboard...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="flex-1 flex items-center justify-center h-full min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4 p-8 glass-panel border-red-100 dark:border-red-500/20 max-w-sm text-center">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white">Something went wrong</h3>
+            <p className="text-[12px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-2 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-[12px] font-bold transition-all shadow-md shadow-blue-500/20"
+            >
+              Retry
+            </button>
           </div>
         </div>
       ) : (

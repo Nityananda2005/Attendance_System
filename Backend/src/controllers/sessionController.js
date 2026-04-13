@@ -1,7 +1,11 @@
 import Session from "../models/Session.js";
 import Attendance from "../models/Attendance.js";
+import User from "../models/User.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import { sendNotificationToStudents } from "../utils/sseProvider.js";
+import { isMatchingSession } from "../utils/sessionMatchers.js";
+
 
 const COLLEGE_LOCATION = {
   lat: 20.21736,
@@ -22,6 +26,15 @@ export const createSession = async (req, res) => {
     // Generate a unique 6-character alphanumeric code
     const sessionCode = crypto.randomBytes(3).toString("hex").toUpperCase();
 
+    // 1. Determine departments for the session
+    let sessionDepts = department;
+    if (!sessionDepts) {
+      sessionDepts = req.user.department; // Fallback to faculty departments (already an array)
+    } else if (!Array.isArray(sessionDepts)) {
+      sessionDepts = [sessionDepts]; // Ensure it's an array
+    }
+
+
     const session = await Session.create({
       facultyId: req.user._id,
       courseId,
@@ -30,15 +43,17 @@ export const createSession = async (req, res) => {
       sessionCode,
       location: geofenceEnabled ? COLLEGE_LOCATION : undefined,
       radiusAllowed: geofenceEnabled ? COLLEGE_RADIUS_METERS : null,
-      department: department || req.user.department,
+      department: sessionDepts,
       semester: semester || req.user.semester,
     });
+
 
     sendNotificationToStudents({
       type: "NEW_SESSION",
       message: `A new session for ${courseName} has been created!`,
       sessionCode
-    });
+    }, sessionDepts, semester || req.user.semester);
+
 
     res.status(201).json(session);
   } catch (error) {
@@ -52,7 +67,7 @@ export const createSession = async (req, res) => {
 export const getFacultySessions = async (req, res) => {
   try {
     const sessions = await Session.aggregate([
-      { $match: { facultyId: req.user._id } },
+      { $match: { facultyId: new mongoose.Types.ObjectId(req.user._id) } },
       {
         $lookup: {
           from: "attendances",
@@ -63,20 +78,33 @@ export const getFacultySessions = async (req, res) => {
       },
       {
         $addFields: {
-          presentCount: { $size: "$attendanceRecords" },
-          // Using a static estimated total for now, until enrollment features exist
-          totalCount: 60 
+          presentCount: { $size: "$attendanceRecords" }
         },
       },
       {
         $project: {
-          attendanceRecords: 0,
+          attendanceRecords: 0
         },
       },
       { $sort: { createdAt: -1 } },
     ]);
 
-    res.json(sessions);
+    if (sessions.length === 0) return res.json([]);
+
+    // Fetch all students to calculate total targeted count in JS for consistency
+    const students = await User.find({ role: 'student' }).select('department semester');
+
+    const sessionsWithCounts = sessions.map(session => {
+       const targetedStudents = students.filter(student => isMatchingSession(student, session));
+       return {
+         ...session,
+         totalCount: targetedStudents.length
+       };
+    });
+
+    
+    res.json(sessionsWithCounts);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -115,7 +143,10 @@ export const getActiveSessions = async (req, res) => {
     const attendedRecords = await Attendance.find({ studentId: req.user._id }).select("sessionId");
     const attendedIds = attendedRecords.map(r => r.sessionId.toString());
 
-    const unMarkedSessions = sessions.filter(
+    // Filter by branch/semester targeting
+    const targetMatchedSessions = sessions.filter(s => isMatchingSession(req.user, s));
+
+    const unMarkedSessions = targetMatchedSessions.filter(
        s => !attendedIds.includes(s._id.toString())
     );
 

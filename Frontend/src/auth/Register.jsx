@@ -18,6 +18,26 @@ const Register = () => {
   const { registerAction } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const BRANCHES = [
+    'Computer Science (CSE)',
+    'Information Technology (IT)',
+    'Artificial Intelligence (AI)',
+    'Data Science (DS)',
+    'Mechanical Engineering (ME)',
+
+    'Civil Engineering (CE)',
+    'Electrical Engineering (EE)',
+    'Electronics & Comm (ECE)',
+    'Chemical Engineering (CHE)',
+    'Architecture (B.Arch)',
+    'Other'
+  ];
+
+  const SEMESTERS = [
+    '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'
+  ];
+
+
   const handleRegister = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -39,7 +59,7 @@ const Register = () => {
       if (userData.role === 'faculty') {
         navigate('/faculty-dashboard');
       } else {
-        navigate('/dashboard');
+        navigate('/profile');
       }
     } catch (err) {
       // Handled by toast
@@ -111,10 +131,10 @@ const Register = () => {
               <span style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', letterSpacing: '0.3px' }}>College Attendance System</span>
             </div>
             <h1 style={{ fontSize: 28, fontWeight: 800, color: theme === 'dark' ? '#f8fafc' : '#0f172a', letterSpacing: '-0.6px', marginBottom: 6, lineHeight: 1.2 }}>
-              Create your <span style={{ color: '#2563eb' }}>Account</span>
+              Student <span style={{ color: '#2563eb' }}>Registration</span>
             </h1>
             <p style={{ fontSize: 14, color: theme === 'dark' ? '#cbd5e1' : '#64748b', lineHeight: 1.6, fontWeight: 450 }}>
-              Join your college community and track your progress effortlessly.
+              Join your college community and track your attendance progress effortlessly.
             </p>
           </div>
 
@@ -122,19 +142,12 @@ const Register = () => {
           <div style={{ background: theme === 'dark' ? '#0f172a' : 'white', borderRadius: 24, padding: '28px 28px', boxShadow: '0 8px 40px rgba(59,130,246,0.08), 0 2px 8px rgba(0,0,0,0.04)', border: theme === 'dark' ? '1px solid rgba(51,65,85,0.8)' : '1px solid rgba(219,234,254,0.8)' }}>
             <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-              {/* Account Type */}
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>I am a...</p>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {[
-                    { id: 'student', label: 'Student', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 14L2 9l10-5 10 5-10 5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><path d="M6 11.5V17c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg> },
-                    { id: 'faculty', label: 'Faculty', icon: <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="13" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M8 21h8M12 16v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg> },
-                  ].map(({ id, label, icon }) => (
-                    <button key={id} type="button" onClick={() => setRole(id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 16px', borderRadius: 12, cursor: 'pointer', border: role === id ? '2px solid #3b82f6' : '2px solid #e2e8f0', background: role === id ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : (theme === 'dark' ? '#0f172a' : 'white'), color: role === id ? '#ffffff' : (theme === 'dark' ? '#cbd5e1' : '#64748b'), fontWeight: 700, fontSize: 14, transition: 'all 0.2s', boxShadow: role === id ? '0 2px 12px rgba(59,130,246,0.15)' : 'none' }}>
-                      {icon}{label}
-                    </button>
-                  ))}
+              {/* Student Registration Notice */}
+              <div style={{ padding: '12px 16px', background: '#eff6ff', borderRadius: 12, border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ color: '#3b82f6' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 14L2 9l10-5 10 5-10 5z"/><path d="M6 11.5V17c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5.5"/></svg>
                 </div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#1d4ed8' }}>Registering as a Student</p>
               </div>
 
               {/* Divider */}
@@ -190,35 +203,53 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Student fields */}
-              {role === 'student' && (
-                <>
-                  <div style={{ height: 1, background: '#f1f5f9' }} />
+              {/* Academic Info */}
+              <div style={{ height: 1, background: '#f1f5f9' }} />
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Academic Info</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Academic Info</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Department</label>
-                        <div style={{ position: 'relative' }}>
-                          <IconWrap>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M6 21V9M18 21V9M9 21v-6h6v6M3 9l9-6 9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          </IconWrap>
-                          <input type="text" value={department} onChange={e => setDepartment(e.target.value)} required placeholder="e.g. CSE" style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Semester</label>
-                        <div style={{ position: 'relative' }}>
-                          <IconWrap>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                          </IconWrap>
-                          <input type="text" value={semester} onChange={e => setSemester(e.target.value)} required placeholder="e.g. 4th" style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
-                        </div>
-                      </div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Department</label>
+                    <div style={{ position: 'relative' }}>
+                      <IconWrap>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M6 21V9M18 21V9M9 21v-6h6v6M3 9l9-6 9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </IconWrap>
+                      <select 
+                        value={department} 
+                        onChange={e => setDepartment(e.target.value)} 
+                        required 
+                        style={inputStyle} 
+                        onFocus={inputFocus} 
+                        onBlur={inputBlur}
+                      >
+                        <option value="">Select Branch...</option>
+                        {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+
                     </div>
                   </div>
-                </>
-              )}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Semester</label>
+                    <div style={{ position: 'relative' }}>
+                      <IconWrap>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                      </IconWrap>
+                      <select 
+                        value={semester} 
+                        onChange={e => setSemester(e.target.value)} 
+                        required 
+                        style={inputStyle} 
+                        onFocus={inputFocus} 
+                        onBlur={inputBlur}
+                      >
+                        <option value="">Select Semester...</option>
+                        {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Submit */}
               <button
