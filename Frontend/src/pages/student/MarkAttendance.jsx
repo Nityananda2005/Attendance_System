@@ -1,11 +1,12 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import StudentLayout from '../../components/StudentLayout';
 import api from '../../api/axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
-  Info, Maximize, MapPin, CheckCircle2, ShieldCheck, AlertCircle, Loader2
+  Info, Maximize, MapPin, CheckCircle2, ShieldCheck, AlertCircle, Loader2, Camera, X
 } from 'lucide-react';
 import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
 
@@ -14,6 +15,7 @@ const MarkAttendance = () => {
   const [sessionCode, setSessionCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const navigate = useNavigate();
 
   const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
@@ -41,6 +43,13 @@ const MarkAttendance = () => {
     );
   }
 
+  const isVerifyingRef = useRef(false);
+
+  // Sync state to ref to avoid stale closures in Scanner callback
+  useEffect(() => {
+    isVerifyingRef.current = isVerifying || success;
+  }, [isVerifying, success]);
+
   const submitAttendance = async (code, location = null) => {
     if (!code) return toast.error("Session Code is required");
     setIsVerifying(true);
@@ -54,12 +63,17 @@ const MarkAttendance = () => {
       setTimeout(() => navigate('/history'), 2000);
     } catch (err) {
       toast.error(err.response?.data?.error || "Verification Failed");
-    } finally {
       setIsVerifying(false);
+      // Let the scanner have a small cooldown before it can scan again after failure
+      setTimeout(() => {
+        isVerifyingRef.current = false;
+      }, 3000);
     }
   };
 
   const handleVerify = async (scannedCode) => {
+    if (isVerifyingRef.current) return;
+    
     const finalCode = typeof scannedCode === 'string' ? scannedCode : sessionCode;
     if (!finalCode) return toast.error("Enter or scan a session code first");
 
@@ -91,8 +105,42 @@ const MarkAttendance = () => {
           {/* Left: Illustration and Info */}
           <div className="glass-panel rounded-[2.5rem] p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center hover:shadow-[0_40px_80px_rgba(59,130,246,0.15)] transition-all duration-700">
             
-            <div className="w-full max-w-[280px] aspect-square rounded-[30px] flex flex-col items-center justify-center relative mb-5">
-               <img src="https://illustrations.popsy.co/blue/student-going-to-school.svg" alt="Student Marking Attendance" className="w-[90%] h-[90%] object-contain" />
+            <div className="w-full max-w-[280px] aspect-square rounded-[30px] overflow-hidden flex flex-col items-center justify-center relative mb-5 border-4 border-blue-500/10 shadow-inner bg-slate-900">
+              {success ? (
+                <div className="flex flex-col items-center justify-center text-green-500 gap-4">
+                  <CheckCircle2 className="w-20 h-20 animate-bounce" />
+                  <p className="font-bold text-lg text-white">Verified!</p>
+                </div>
+              ) : isScanning ? (
+                <>
+                  <Scanner
+                    onScan={(result) => {
+                      if (result && result.length > 0) {
+                        handleVerify(result[0].rawValue);
+                      }
+                    }}
+                    onError={(error) => console.log("Scanner Error:", error?.message)}
+                    components={{ audio: false, finder: true }}
+                  />
+                  <button 
+                    onClick={() => setIsScanning(false)}
+                    className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black text-white rounded-xl z-[99] transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-500 gap-4 w-full h-full bg-slate-800/50">
+                  <Camera className="w-12 h-12 opacity-50 mb-2" />
+                  <p className="text-xs font-medium text-slate-400">Camera is inactive</p>
+                  <button 
+                    onClick={() => setIsScanning(true)}
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Camera className="w-4 h-4" /> Start Scan
+                  </button>
+                </div>
+              )}
             </div>
 
             <h2 className="text-[19px] font-black text-gray-900 dark:text-white tracking-tight mb-2">Fast-Pass Attendance</h2>

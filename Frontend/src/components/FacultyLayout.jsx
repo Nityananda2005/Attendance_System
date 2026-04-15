@@ -133,7 +133,7 @@ const FacultyLayout = ({ children }) => {
               {theme === 'dark' ? <Sun className="w-[20px] h-[20px]" strokeWidth={2} /> : <Moon className="w-[20px] h-[20px]" strokeWidth={2} />}
             </button>
 
-            <button className="relative text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors hidden sm:block">
+            <button className="relative text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
               <Bell className="w-[20px] h-[20px]" strokeWidth={2} />
               <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 border border-white dark:border-slate-900 rounded-full" />
             </button>

@@ -217,7 +217,7 @@ const StudentLayout = ({ children, title }) => {
             </button>
 
             {/* Notification indicator */}
-            <div className="relative hidden sm:block" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => {
                   if (notifications.length > 0) setShowNotifications(!showNotifications);
@@ -234,7 +234,7 @@ const StudentLayout = ({ children, title }) => {
 
               {/* Notifications Dropdown */}
               {showNotifications && notifications.length > 0 && (
-                <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200/80 dark:border-slate-700 py-2 z-50 animate-in fade-in slide-in-from-top-4">
+                <div className="absolute -right-12 sm:right-0 mt-3 w-[280px] sm:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200/50 dark:border-slate-700 py-2 z-50 animate-in fade-in slide-in-from-top-4">
                   <div className="px-4 py-2 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center">
                     <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-200">Notifications</h3>
                     <button 
