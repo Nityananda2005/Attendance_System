@@ -59,7 +59,8 @@ const MarkAttendance = () => {
       toast.success(res.data.message || "Attendance Marked Successfully!", { duration: 2000 });
       setTimeout(() => navigate('/history'), 2000);
     } catch (err) {
-      toast.error(err.response?.data?.error || "Verification Failed");
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || "Verification Failed";
+      toast.error(errorMsg);
       setIsVerifying(false);
       // Let the scanner have a small cooldown before it can scan again after failure
       setTimeout(() => {
@@ -112,8 +113,19 @@ const MarkAttendance = () => {
                 <>
                   <Scanner
                     onScan={(result) => {
-                      if (result && result.length > 0) {
-                        handleVerify(result[0].rawValue);
+                      if (!result) return;
+                      
+                      let scannedValue = null;
+                      if (Array.isArray(result) && result.length > 0 && result[0].rawValue) {
+                        scannedValue = result[0].rawValue;
+                      } else if (typeof result === 'string') {
+                        scannedValue = result;
+                      } else if (result.text) {
+                        scannedValue = result.text;
+                      }
+
+                      if (scannedValue) {
+                        handleVerify(scannedValue);
                       }
                     }}
                     onError={(error) => console.log("Scanner Error:", error?.message)}
