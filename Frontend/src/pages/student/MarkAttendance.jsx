@@ -45,17 +45,14 @@ const MarkAttendance = () => {
 
   const isVerifyingRef = useRef(false);
 
-  // Sync state to ref to avoid stale closures in Scanner callback
-  useEffect(() => {
-    isVerifyingRef.current = isVerifying || success;
-  }, [isVerifying, success]);
-
   const submitAttendance = async (code, location = null) => {
     if (!code) return toast.error("Session Code is required");
+    
+    isVerifyingRef.current = true; // Synchronous lock to prevent scanner spam
     setIsVerifying(true);
     try {
       const res = await api.post('/attendance/mark', {
-        sessionCode: code.toUpperCase(),
+        sessionCode: code.toUpperCase().trim(),
         location
       });
       setSuccess(true);
@@ -72,7 +69,7 @@ const MarkAttendance = () => {
   };
 
   const handleVerify = async (scannedCode) => {
-    if (isVerifyingRef.current) return;
+    if (isVerifyingRef.current || success) return;
     
     const finalCode = typeof scannedCode === 'string' ? scannedCode : sessionCode;
     if (!finalCode) return toast.error("Enter or scan a session code first");
