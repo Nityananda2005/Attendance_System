@@ -125,11 +125,15 @@ const MarkAttendance = () => {
                       }
 
                       if (scannedValue) {
-                        handleVerify(scannedValue);
+                        // Avoid triggering if we are already verifying or successful
+                        if (isVerifyingRef.current || success) return;
+                        submitAttendance(scannedValue, null);
                       }
                     }}
                     onError={(error) => console.log("Scanner Error:", error?.message)}
                     components={{ audio: false, finder: true }}
+                    allowMultiple={true}
+                    scanDelay={3000}
                   />
                   <button 
                     onClick={() => setIsScanning(false)}
