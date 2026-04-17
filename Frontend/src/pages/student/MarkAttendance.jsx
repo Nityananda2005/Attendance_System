@@ -52,8 +52,11 @@ const MarkAttendance = () => {
         location: null // Geolocation verification disabled
       });
       setSuccess(true);
-      toast.success(res.data.message || "Attendance Marked Successfully!", { duration: 2000 });
-      setTimeout(() => navigate('/history'), 2000);
+      const toastId = toast.success(res.data.message || "Attendance Marked Successfully!", { duration: 2000 });
+      setTimeout(() => {
+        toast.dismiss(toastId);
+        navigate('/history');
+      }, 2000);
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.response?.data?.error || "Verification Failed";
       toast.error(errorMsg);

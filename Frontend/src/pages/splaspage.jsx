@@ -242,7 +242,7 @@ const SplashPage = () => {
 
           <div className="relative group">
             {/* Visual element representing the system */}
-            <div className="relative z-10 w-full aspect-square md:aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]">
+            <div className="relative z-10 w-full aspect-square md:aspect-[4/3] lg:aspect-square xl:aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]">
               <div className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-700 ${
                 theme === 'dark' ? 'from-blue-600/20 to-indigo-900/40' : 'from-blue-50 to-indigo-100'
               }`} />

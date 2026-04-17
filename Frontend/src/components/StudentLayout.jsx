@@ -49,6 +49,7 @@ const StudentLayout = ({ children, title }) => {
         setNotifications(prev => prev.filter(n => n.sessionCode !== code));
         
         setTimeout(() => {
+          toast.dismiss(loadingToast);
           navigate('/history');
         }, 2000);
       } catch (err) {
