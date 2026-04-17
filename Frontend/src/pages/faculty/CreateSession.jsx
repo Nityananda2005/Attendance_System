@@ -177,7 +177,7 @@ const CreateSession = () => {
                    <div className="p-6 sm:px-8 bg-gray-50 dark:bg-slate-800/50/70 flex items-center justify-between">
                      <button className="text-[14px] font-extrabold text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:text-slate-200 transition-colors px-2">Cancel</button>
                      <button onClick={handleGenerate} disabled={isGenerating || sessionCode} className="flex items-center gap-2 px-7 py-3.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-[14px] text-[13.5px] font-bold transition-all shadow-md shadow-blue-500/20">
-                       {isGenerating ? <><Loader2 className="w-[18px] h-[18px] animate-spin" /> Generating...</> : <>Generate Live QR <ChevronRight className="w-[18px] h-[18px]" strokeWidth={3} /></>}
+                       {isGenerating ? <><Loader2 className="w-[18px] h-[18px] animate-spin" /> Generating...</> : <>Generate Live Code <ChevronRight className="w-[18px] h-[18px]" strokeWidth={3} /></>}
                      </button>
                    </div>
                  </div>

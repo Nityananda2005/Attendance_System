@@ -145,6 +145,9 @@ const StudentLayout = ({ children, title }) => {
              if (prev.some(n => n.sessionCode === data.sessionCode)) return prev;
              return [data, ...prev];
           });
+        } else if (data.type === 'SESSION_ENDED') {
+          // Remove the session from notifications
+          setNotifications(prev => prev.filter(n => n.sessionCode !== data.sessionCode));
         }
       } catch (err) {
         console.error("SSE parse error", err);
@@ -226,7 +229,7 @@ const StudentLayout = ({ children, title }) => {
               >
                 <Bell className="w-[20px] h-[20px]" strokeWidth={2} />
                 {notifications.length > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-500 border border-white dark:border-slate-900 text-[8px] font-bold text-white shadow-sm">
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-green-500 border border-white dark:border-slate-900 text-[8px] font-bold text-white shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse">
                     {notifications.length}
                   </span>
                 )}

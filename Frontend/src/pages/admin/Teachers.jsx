@@ -65,7 +65,7 @@ const Teachers = () => {
 
   const handleDeptToggle = (dept) => {
     setFormData(prev => {
-      const currentDepts = prev.department || [];
+      const currentDepts = Array.isArray(prev.department) ? prev.department : [];
       if (currentDepts.includes(dept)) {
         return { ...prev, department: currentDepts.filter(d => d !== dept) };
       } else {
@@ -225,7 +225,7 @@ const Teachers = () => {
             <button 
               onClick={() => {
                 setEditingTeacher(null);
-                setFormData({ name: '', email: '', password: '', department: 'Computer Science' });
+                setFormData({ name: '', email: '', password: '', department: [] });
                 setShowModal(true);
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all"
@@ -309,7 +309,9 @@ const Teachers = () => {
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1.5 max-w-[200px]">
                           {Array.isArray(teacher.department) && teacher.department.length > 0 ? (
-                            teacher.department.map((dept, idx) => (
+                            teacher.department
+                               .filter(dept => dept && DEPARTMENTS.includes(dept)) // Cleanup any garbaged strings or individual letters
+                               .map((dept, idx) => (
                               <span key={idx} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-lg border border-blue-100 dark:border-blue-800/50">
                                 {dept.split('(')[1]?.replace(')', '') || dept}
                               </span>

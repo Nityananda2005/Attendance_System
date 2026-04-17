@@ -4,11 +4,10 @@ import { AuthContext } from '../../context/AuthContext';
 import FacultyLayout from '../../components/FacultyLayout';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
-import QRCode from 'react-qr-code';
 import { 
   Activity, History,
   Plus, Users, TrendingUp, Clock, 
-  QrCode as QrCodeIcon, Download, Search, ShieldCheck, MapPin, MoreHorizontal, BookOpen
+  KeyRound, Download, Search, ShieldCheck, MapPin, MoreHorizontal, BookOpen, Key
 } from 'lucide-react';
 
 
@@ -276,36 +275,41 @@ const FacultyDashboard = () => {
 
                   <div className="flex items-center gap-4">
                     <button className="flex-1 flex items-center justify-center gap-2.5 py-3.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-800/50 text-gray-700 dark:text-slate-300 rounded-xl font-bold transition-all shadow-sm cursor-default">
-                      <QrCodeIcon className="w-5 h-5" strokeWidth={2.5}/>
-                      Scan code from right panel
+                      <KeyRound className="w-5 h-5" strokeWidth={2.5}/>
+                      Share passcode with students
                     </button>
                     <button onClick={handleEndSession} className="flex-1 flex items-center justify-center py-3.5 bg-white dark:bg-slate-800 border-2 border-red-100 dark:border-red-500/20 text-red-500 hover:bg-red-50 dark:bg-red-500/10 hover:border-red-200 rounded-xl font-bold transition-all cursor-pointer">
+
                       End Live Session
                     </button>
                   </div>
                 </div>
 
                 {/* Quick Scan Right */}
-                <div className="w-full lg:w-[360px] shrink-0 glass-panel rounded-3xl p-7 hover:shadow-[0_20px_50px_rgba(59,130,246,0.3)] transition-all duration-500">
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-[17px] font-extrabold text-gray-900 dark:text-white tracking-tight">Active Scan Point</h3>
-                    <span className="px-2.5 py-1 bg-green-50 dark:bg-green-500/10 text-green-600 font-extrabold text-[10px] rounded-lg uppercase tracking-wider border border-green-200 shadow-sm">REAL QR</span>
+                <div className="w-full lg:w-[360px] shrink-0 glass-panel rounded-3xl p-7 hover:shadow-[0_20px_50px_rgba(59,130,246,0.3)] transition-all duration-500 flex flex-col items-center justify-center text-center">
+                  <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center mb-6">
+                    <Key className="w-8 h-8 text-blue-500 dark:text-blue-400" strokeWidth={2} />
                   </div>
 
-                  <div className="bg-white dark:bg-slate-800 border-[2.5px] border-dashed dark:border-slate-700 border-gray-200 dark:border-slate-700 rounded-3xl p-8 flex flex-col items-center justify-center mb-5 min-h-[220px]">
-                      <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 mb-4">
-                         <QRCode value={activeSession.sessionCode} size={140} fgColor="#1e293b" />
-                      </div>
-                      <p className="text-[15px] font-black text-gray-900 dark:text-white tracking-wide bg-gray-100 dark:bg-slate-700/50 px-4 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700">{activeSession.sessionCode}</p>
+                  <h3 className="text-[15px] font-bold text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-widest">Live Session Code</h3>
+                  <div className="bg-white dark:bg-slate-800/80 border-[3px] border-blue-500/10 dark:border-blue-500/20 rounded-2xl p-6 flex flex-col items-center justify-center w-full mb-6 shadow-inner">
+                      <p className="text-[42px] font-black text-blue-600 dark:text-blue-400 tracking-[0.2em] leading-none drop-shadow-sm filter">
+                        {activeSession.sessionCode}
+                      </p>
                   </div>
 
-                  <button className="w-full flex items-center justify-center gap-2.5 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-800/50 text-gray-700 dark:text-slate-300 rounded-xl text-[13px] font-bold transition-all mb-4 shadow-sm cursor-not-allowed opacity-50">
-                      <Download className="w-[18px] h-[18px]" strokeWidth={2.5} />
-                      Download Image
-                  </button>
-                  <p className="text-[11px] text-gray-400 dark:text-slate-500 text-center font-semibold px-4 leading-relaxed">
-                    Have students scan this from the application to record GPS-backed presence.
+                  <p className="text-[12px] text-gray-500 dark:text-slate-400 font-semibold px-4 leading-relaxed mb-4">
+                    Students must enter this 6-digit passcode in their application to record their presence securely.
                   </p>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(activeSession.sessionCode);
+                      toast.success("Code Copied!");
+                    }}
+                    className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-gray-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600 text-white rounded-xl text-[13px] font-bold transition-all shadow-md active:scale-95"
+                  >
+                      Copy to Clipboard
+                  </button>
                 </div>
               </div>
             ) : (

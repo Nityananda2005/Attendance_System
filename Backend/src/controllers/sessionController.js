@@ -174,6 +174,12 @@ export const closeSession = async (req, res) => {
     session.status = "completed";
     await session.save();
 
+    sendNotificationToStudents({
+      type: "SESSION_ENDED",
+      message: "Session has ended",
+      sessionCode: session.sessionCode
+    }, session.department, session.semester);
+
     res.json({ message: "Session closed successfully", session });
   } catch (error) {
     res.status(500).json({ message: error.message });

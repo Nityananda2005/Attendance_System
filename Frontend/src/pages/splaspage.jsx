@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 import { 
-  QrCode, 
+  GraduationCap, 
   MapPin, 
   BarChart3, 
   ShieldCheck, 
@@ -106,7 +106,7 @@ const SplashPage = () => {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <QrCode className="text-white" size={22} />
+              <GraduationCap className="text-white" size={22} />
             </div>
             <span className={`text-xl font-extrabold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
               Attendify
@@ -206,7 +206,7 @@ const SplashPage = () => {
             <p className={`text-lg md:text-xl mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed ${
               theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
             }`}>
-              Eliminate proxy attendance with QR-based verification and GPS geofencing. Real-time data, instant alerts, and seamless academic integration.
+              Eliminate proxy attendance with secure location-based verification. Real-time tracking, deep analytics, and seamless academic integration.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -257,20 +257,28 @@ const SplashPage = () => {
                   </div>
                   <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded-full" />
                 </div>
-                <div className="p-8 grid grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="h-24 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                      <QrCode className="text-blue-500 animate-pulse" size={40} />
+                <div className="p-6 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded-full mb-2" />
+                      <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded-full" />
                     </div>
-                    <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full" />
-                    <div className="h-4 w-2/3 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                    <div className="w-12 h-12 rounded-full border-4 border-blue-500 flex items-center justify-center">
+                      <span className="text-xs font-bold text-blue-500">85%</span>
+                    </div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="h-24 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
-                      <MapPin className="text-indigo-500" size={40} />
-                    </div>
-                    <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded-full" />
-                    <div className="h-4 w-4/5 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                          <BarChart3 className="text-indigo-500" size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="h-3 w-3/4 bg-slate-200 dark:bg-slate-700 rounded-full mb-2" />
+                          <div className="h-2 w-1/2 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 {/* Floating Status Card */}
@@ -306,9 +314,9 @@ const SplashPage = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <FeatureCard 
-              icon={QrCode}
-              title="Dynamic QR Codes"
-              description="Secure, time-limited QR codes that change for every session, effectively eliminating proxy presence."
+              icon={GraduationCap}
+              title="Smart Automation"
+              description="Automatic attendance tracking and instant verification, reducing manual effort and minimizing errors."
             />
             <FeatureCard 
               icon={MapPin}
@@ -344,8 +352,8 @@ const SplashPage = () => {
                 />
                 <Step 
                   number="02"
-                  title="Student Scan"
-                  description="Students open their Attendify app and scan the dynamic QR code displayed in the classroom."
+                  title="Mark Attendance"
+                  description="Students open their Attendify app, securely authenticate, and mark their presence in the classroom."
                 />
                 <Step 
                   number="03"
@@ -381,13 +389,24 @@ const SplashPage = () => {
                     </span>
                   </div>
                   <div className="space-y-4">
-                    <div className={`h-40 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4 ${
+                    <div className={`p-5 rounded-2xl border flex flex-col gap-4 ${
                       theme === 'dark' ? 'border-slate-800 bg-slate-900' : 'border-blue-100 bg-blue-50/30'
                     }`}>
-                      <div className="w-16 h-16 rounded-xl bg-white dark:bg-slate-800 shadow-md flex items-center justify-center text-blue-500">
-                        <QrCode size={32} />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-blue-500 border border-slate-100 dark:border-slate-700">
+                            <BarChart3 size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold dark:text-white">Overall Attendance</p>
+                            <p className="text-xs text-slate-500">Current Semester</p>
+                          </div>
+                        </div>
+                        <span className="text-lg font-black text-blue-500">78%</span>
                       </div>
-                      <p className="text-sm font-medium text-slate-400">Scan classroom QR to identify</p>
+                      <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 w-[78%] rounded-full" />
+                      </div>
                     </div>
                     <div className={`p-4 rounded-xl flex items-center justify-between ${
                       theme === 'dark' ? 'bg-slate-800' : 'bg-slate-50'
@@ -436,7 +455,7 @@ const SplashPage = () => {
                 <ShieldCheck className="text-blue-500" size={20} /> System Integrity
               </h4>
               <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
-                Proxy attendance and remote scanning are strictly prohibited. Our dual-verification system (GPS + Dynamic QR) is designed to maintain academic honesty and provide fair records for all students.
+                Proxy attendance is strictly prohibited. Our secure verification system is designed to maintain academic honesty and provide fair records for all students.
               </p>
             </div>
           </div>
@@ -450,7 +469,7 @@ const SplashPage = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
-              <QrCode size={16} />
+              <GraduationCap size={16} />
             </div>
             <span className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Attendify</span>
           </div>

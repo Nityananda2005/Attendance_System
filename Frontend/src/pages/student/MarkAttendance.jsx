@@ -1,22 +1,20 @@
-import React, { useState, useContext, useRef, useEffect } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import StudentLayout from '../../components/StudentLayout';
 import api from '../../api/axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
-  Info, Maximize, MapPin, CheckCircle2, ShieldCheck, AlertCircle, Loader2, Camera, X
+  Info, MapPin, CheckCircle2, ShieldCheck, AlertCircle, Loader2, KeyRound
 } from 'lucide-react';
-import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
 
 const MarkAttendance = () => {
   const { user } = useContext(AuthContext);
   const [sessionCode, setSessionCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
   const navigate = useNavigate();
+  const inputRefs = useRef([]);
 
   const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
   const isProfileIncomplete = user?.role === 'student' && requiredFields.some(f => !user[f] || user[f].toString().trim() === '');
@@ -43,17 +41,15 @@ const MarkAttendance = () => {
     );
   }
 
-  const isVerifyingRef = useRef(false);
-
-  const submitAttendance = async (code, location = null) => {
-    if (!code) return toast.error("Session Code is required");
+  const handleVerify = async () => {
+    if (!sessionCode || sessionCode.length !== 6) return toast.error("Please enter a valid 6-digit session code");
+    if (isVerifying || success) return;
     
-    isVerifyingRef.current = true; // Synchronous lock to prevent scanner spam
     setIsVerifying(true);
     try {
       const res = await api.post('/attendance/mark', {
-        sessionCode: code.toUpperCase().trim(),
-        location
+        sessionCode: sessionCode.toUpperCase().trim(),
+        location: null // Geolocation verification disabled
       });
       setSuccess(true);
       toast.success(res.data.message || "Attendance Marked Successfully!", { duration: 2000 });
@@ -62,21 +58,46 @@ const MarkAttendance = () => {
       const errorMsg = err.response?.data?.message || err.response?.data?.error || "Verification Failed";
       toast.error(errorMsg);
       setIsVerifying(false);
-      // Let the scanner have a small cooldown before it can scan again after failure
-      setTimeout(() => {
-        isVerifyingRef.current = false;
-      }, 3000);
+      setSessionCode('');
+      inputRefs.current[0]?.focus();
     }
   };
 
-  const handleVerify = async (scannedCode) => {
-    if (isVerifyingRef.current || success) return;
-    
-    const finalCode = typeof scannedCode === 'string' ? scannedCode : sessionCode;
-    if (!finalCode) return toast.error("Enter or scan a session code first");
+  const handleOtpChange = (index, e) => {
+    const val = e.target.value.toUpperCase();
+    if (!/^[A-Z0-9]*$/.test(val)) return; // Only alphanumeric
 
-    // Geolocation is currently disabled to speed up verification
-    await submitAttendance(finalCode, null);
+    let newCode = sessionCode.split('');
+    while(newCode.length < 6) newCode.push('');
+    
+    // Support pasting 6 chars directly
+    if (val.length > 1) {
+      const pasted = val.replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      setSessionCode(pasted);
+      if (pasted.length === 6 && inputRefs.current[5]) {
+         inputRefs.current[5].focus();
+      } else if (pasted.length > 0) {
+         inputRefs.current[pasted.length - 1]?.focus();
+      }
+      return;
+    }
+
+    newCode[index] = val;
+    const combined = newCode.join('').slice(0, 6);
+    setSessionCode(combined);
+
+    if (val && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !sessionCode[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'Enter' && sessionCode.length === 6) {
+      handleVerify();
+    }
   };
 
   return (
@@ -86,132 +107,94 @@ const MarkAttendance = () => {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-3">
           <div>
-            <h1 className="text-xl sm:text-[24px] font-extrabold text-gray-900 dark:text-white tracking-tight mb-1">Mark Attendance</h1>
+            <h1 className="text-xl sm:text-[24px] font-extrabold text-gray-900 dark:text-white tracking-tight mb-1">Verify Presence</h1>
             <p className="text-[13px] sm:text-[14px] text-gray-500 dark:text-slate-400 font-medium">
-              Verify your presence for today's session.
+              Enter the unique session code to log your attendance.
             </p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-full text-blue-600 dark:text-blue-400 w-fit text-[11px] font-bold">
             <Info className="w-3.5 h-3.5 shrink-0" />
-            Verification Active (Bypassed)
+            Verification Active
           </div>
         </div>
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-5 items-start">
 
-          {/* Left: Illustration and Info */}
+          {/* Left: Input Console */}
           <div className="glass-panel rounded-[2.5rem] p-5 sm:p-7 shadow-2xl flex flex-col items-center text-center hover:shadow-[0_40px_80px_rgba(59,130,246,0.15)] transition-all duration-700">
             
-            <div className="w-full max-w-[280px] aspect-square rounded-[30px] overflow-hidden flex flex-col items-center justify-center relative mb-5 border-4 border-blue-500/10 shadow-inner bg-slate-900">
+            <div className="w-full max-w-[320px] rounded-[30px] overflow-hidden flex flex-col items-center justify-center relative mb-6 border-[6px] border-blue-50 dark:border-blue-500/10 shadow-inner bg-white dark:bg-slate-900 aspect-[4/3]">
               {success ? (
-                <div className="flex flex-col items-center justify-center text-green-500 gap-4">
+                <div className="flex flex-col items-center justify-center text-green-500 gap-4 h-full w-full">
                   <CheckCircle2 className="w-20 h-20 animate-bounce" />
-                  <p className="font-bold text-lg text-white">Verified!</p>
+                  <p className="font-bold text-lg text-gray-900 dark:text-white">Attendance Verified!</p>
                 </div>
-              ) : isScanning ? (
-                <>
-                  <Scanner
-                    onScan={(result) => {
-                      if (!result) return;
-                      
-                      let scannedValue = null;
-                      if (Array.isArray(result) && result.length > 0 && result[0].rawValue) {
-                        scannedValue = result[0].rawValue;
-                      } else if (typeof result === 'string') {
-                        scannedValue = result;
-                      } else if (result.text) {
-                        scannedValue = result.text;
-                      }
-
-                      if (scannedValue) {
-                        // Avoid triggering if we are already verifying or successful
-                        if (isVerifyingRef.current || success) return;
-                        submitAttendance(scannedValue, null);
-                      }
-                    }}
-                    onError={(error) => console.log("Scanner Error:", error?.message)}
-                    components={{ audio: false, finder: true }}
-                    allowMultiple={true}
-                    scanDelay={3000}
-                  />
-                  <button 
-                    onClick={() => setIsScanning(false)}
-                    className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black text-white rounded-xl z-[99] transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </>
               ) : (
-                <div className="flex flex-col items-center justify-center text-slate-500 gap-4 w-full h-full bg-slate-800/50">
-                  <Camera className="w-12 h-12 opacity-50 mb-2" />
-                  <p className="text-xs font-medium text-slate-400">Camera is inactive</p>
+                <div className="flex flex-col items-center justify-center w-full h-full px-5 py-6 bg-slate-50 dark:bg-slate-800/50">
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                    <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+                  </div>
+                  
+                  <div className="flex gap-2 sm:gap-2.5 mb-7 relative z-10 w-full justify-center">
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <input
+                        key={index}
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        type="text"
+                        maxLength={6}
+                        value={sessionCode[index] || ''}
+                        onChange={(e) => handleOtpChange(index, e)}
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        className={`w-9 h-11 sm:w-11 sm:h-14 bg-white dark:bg-slate-900 border-2 ${sessionCode[index] ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'border-gray-200 dark:border-slate-700/60'} rounded-xl text-center text-lg sm:text-xl font-black text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all`}
+                      />
+                    ))}
+                  </div>
+
                   <button 
-                    onClick={() => setIsScanning(true)}
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    onClick={handleVerify}
+                    disabled={isVerifying || sessionCode.length !== 6}
+                    className="w-full sm:w-[90%] py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-200 dark:disabled:bg-slate-700 disabled:text-white/60 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <Camera className="w-4 h-4" /> Start Scan
+                    {isVerifying ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify Session"}
                   </button>
                 </div>
               )}
             </div>
 
-            <h2 className="text-[19px] font-black text-gray-900 dark:text-white tracking-tight mb-2">Fast-Pass Attendance</h2>
+            <h2 className="text-[19px] font-black text-gray-900 dark:text-white tracking-tight mb-2">Secure Passcode</h2>
             <p className="text-[13px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mb-6 px-4">
-              Enter the session code provided by your faculty. Location verification is currently disabled for your convenience.
+              Enter the unique 6-digit alphanumerical code provided by your faculty on the screen.
             </p>
 
-            {/* Tips */}
-            <div className="w-full bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl p-4 flex gap-3 text-left">
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 shrink-0 flex items-center justify-center text-blue-500 dark:text-blue-400">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="text-[12px] font-bold text-blue-800 dark:text-blue-300 mb-0.5">Quick Verification</h4>
-                <p className="text-[11px] font-medium text-blue-600 dark:text-blue-400/80 leading-relaxed">
-                  Simply enter the 6-digit session code. Location bounds are currently not enforced.
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Right: Verification */}
+          {/* Right: Verification Checkpoints */}
           <div className="space-y-4">
-
-            {/* Location Check */}
-            <div className="glass-card-3d p-6">
-              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-1">Location Check</h3>
-              <p className="text-[12px] text-gray-500 dark:text-slate-400 font-medium mb-4">Live geofence verification.</p>
-              <div className="relative w-full h-40 bg-[#eef2f6] rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700/60">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cartographer.png')] opacity-30 mix-blend-multiply" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full border-2 border-blue-500/30 bg-blue-500/10" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full border border-blue-500/10" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-4 flex flex-col items-center">
-                  <div className="px-2 py-0.5 bg-white dark:bg-slate-800 rounded-full shadow-md text-[10px] font-bold text-gray-800 dark:text-slate-200 mb-1 border border-gray-100 dark:border-slate-700">
-                    Lecture Hall A
-                  </div>
-                  <MapPin className="w-6 h-6 text-blue-500 dark:text-blue-400 fill-blue-100 drop-shadow-md" strokeWidth={2} />
-                </div>
-                <div className="absolute bottom-3 left-3 right-3 glass-panel backdrop-blur-3xl rounded-2xl p-3 shadow-2xl flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin shrink-0" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Verification Active</p>
-                    <p className="text-[12px] font-extrabold text-gray-800 dark:text-slate-200">Calculating GPS Delta...</p>
-                  </div>
-                </div>
+            
+            {/* Quick Status */}
+            <div className="glass-card-3d p-6 bg-gradient-to-br from-blue-500 to-blue-700 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <ShieldCheck className="w-32 h-32" />
+              </div>
+              <h3 className="text-[16px] font-black mb-1 relative z-10">Verification Ready</h3>
+              <p className="text-[12px] text-blue-100 font-medium mb-4 relative z-10 leading-relaxed">
+                Your device is connected securely. Standby for the session code from your instructor.
+              </p>
+              <div className="flex items-center gap-2 relative z-10 text-[11px] font-bold uppercase tracking-widest text-blue-100">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                System Online
               </div>
             </div>
 
             {/* Verification Steps */}
             <div className="glass-card-3d p-6">
-              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-4">Verification Steps</h3>
+              <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-4">Security Sequence</h3>
               <div className="space-y-4">
                 {[
                   { icon: CheckCircle2, title: 'Session Verified', desc: 'App handshake with academic server.' },
                   { icon: ShieldCheck, title: 'Verify Code', desc: 'Validating session cryptographic key.' },
-                  { icon: MapPin, title: 'Geofence Active', desc: 'Securely transmitting your GPS to check college bounds.' },
+                  { icon: MapPin, title: 'Location Ignored', desc: 'Geofencing bounds are currently bypassed.' },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3 group cursor-default">
                     <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 flex items-center justify-center shrink-0 text-gray-400 dark:text-slate-500 group-hover:text-blue-500 dark:text-blue-400 group-hover:border-blue-100 dark:border-blue-500/20 group-hover:bg-blue-50 dark:bg-blue-500/10 transition-all">
@@ -225,33 +208,6 @@ const MarkAttendance = () => {
                 ))}
               </div>
             </div>
-
-            {/* Manual Code */}
-            <div className="glass-card-3d p-6">
-              <h4 className="text-[14px] font-bold text-gray-900 dark:text-white mb-3">Or Verify via Session Code</h4>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="text"
-                  value={sessionCode}
-                  onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. A9F2C1"
-                  className="w-full sm:flex-1 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[14px] font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 tracking-widest uppercase placeholder-gray-400"
-                />
-                <button
-                  onClick={handleVerify}
-                  disabled={isVerifying}
-                  className="w-full sm:w-auto px-5 py-3 bg-gray-900 hover:bg-black text-white rounded-xl text-[13px] font-bold transition-all flex justify-center items-center gap-2 shadow-sm disabled:opacity-50 shrink-0"
-                >
-                  {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                  Verify Code
-                </button>
-              </div>
-              {success && (
-                <p className="text-green-600 text-[11px] font-bold mt-3 uppercase tracking-wider flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Attendance Logged
-                </p>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -260,6 +216,7 @@ const MarkAttendance = () => {
 };
 
 export default MarkAttendance;
+
 
 
 
