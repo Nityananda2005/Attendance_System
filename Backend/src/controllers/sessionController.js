@@ -43,7 +43,7 @@ export const createSession = async (req, res) => {
       topic,
       sessionCode,
       location: geofenceEnabled ? { lat: location.lat, lng: location.lng } : undefined,
-      radiusAllowed: 200, // Fixed 200m radius as per requirement
+      radiusAllowed: radiusAllowed || 50, // Use faculty selection or default to 50m
       department: sessionDepts,
       semester: semester || req.user.semester,
       expiresAt: new Date(Date.now() + 60 * 60 * 1000), // Default 60 minutes duration

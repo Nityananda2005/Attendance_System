@@ -96,8 +96,8 @@ export const markAttendance = async (req, res) => {
         lng
       );
 
-      const tolerance = 50;
-      const maxAllowed = (session.radiusAllowed || 200) + tolerance;
+      const tolerance = 20; // Reduced from 50m to 20m for stricter classroom-level precision
+      const maxAllowed = (session.radiusAllowed || 50) + tolerance;
 
       if (distance > maxAllowed) {
         return res.status(403).json({
