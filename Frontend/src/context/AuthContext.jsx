@@ -5,20 +5,16 @@ import { toast } from 'react-hot-toast';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // If a token exists but user is null, we could fetch user profile here.
-    // For now, we will decode from localStorage if we saved it there 
-    // or just assume they are logged in based on token.
-    const storedUser = localStorage.getItem('user');
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      return stored && stored !== 'undefined' ? JSON.parse(stored) : null;
+    } catch {
+      return null;
     }
-    setLoading(false);
-  }, [token]);
+  });
+  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [loading, setLoading] = useState(false);
 
   const loginAction = async (email, password) => {
     try {
