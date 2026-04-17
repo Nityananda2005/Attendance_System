@@ -17,7 +17,9 @@ import {
   MoreVertical,
   FileText,
   MapPin,
-  TrendingUp
+  TrendingUp,
+  X,
+  Lock
 } from 'lucide-react';
 
 
@@ -54,6 +56,33 @@ const Students = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [limit] = useState(10);
   const [exporting, setExporting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [visiblePasswords, setVisiblePasswords] = useState({});
+
+  const togglePasswordVisibility = (id) => {
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const [formData, setFormData] = useState({
+    password: ''
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingStudent) {
+        await api.put(`/admin/students/${editingStudent._id}`, formData);
+        toast.success("Student password updated");
+      }
+      setShowModal(false);
+      setEditingStudent(null);
+      setFormData({ password: '' });
+      fetchStudents();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Operation failed");
+    }
+  };
 
   useEffect(() => {
     fetchStudents();
@@ -219,6 +248,7 @@ const Students = () => {
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Branch</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mobile Number</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Semester</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Password</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Actions</th>
                 </tr>
               </thead>
@@ -265,7 +295,30 @@ const Students = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono px-2 py-1 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded ring-1 ring-red-100 dark:ring-red-900/50 min-w-[70px] text-center">
+                            {visiblePasswords[student._id] ? (student.rawPassword || 'N/A') : '••••••••'}
+                          </span>
+                          <button 
+                            onClick={() => togglePasswordVisibility(student._id)}
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded transition-colors text-gray-400 hover:text-blue-500"
+                          >
+                            {visiblePasswords[student._id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingStudent(student);
+                              setFormData({ password: '' });
+                              setShowModal(true);
+                            }}
+                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
                           <button 
                             onClick={() => handleDelete(student._id)}
                             className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
@@ -342,6 +395,68 @@ const Students = () => {
         </div>
 
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Update Student Password
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+                  Change the password for {editingStudent?.name}.
+                </p>
+              </div>
+
+              <button 
+                onClick={() => { setShowModal(false); setEditingStudent(null); }}
+                className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+            </div>
+            
+            <form className="p-6 space-y-5" onSubmit={handleSubmit}>
+              <div className="flex items-center gap-4">
+                <label className="w-1/3 text-sm font-bold text-gray-700 dark:text-slate-300">
+                  New Password
+                </label>
+                <div className="w-2/3 relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Enter new password" 
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-white"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-6 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };

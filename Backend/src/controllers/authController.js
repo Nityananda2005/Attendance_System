@@ -39,6 +39,7 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      rawPassword: password,
       role: userRole,
       enrollmentId: enrollmentId?.trim() || `STU-${Math.random().toString(36).substring(7).toUpperCase()}`,
       department,
