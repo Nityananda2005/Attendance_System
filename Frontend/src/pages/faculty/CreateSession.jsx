@@ -7,13 +7,10 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
 
-const COLLEGE_LOCATION = {
-  lat: 20.21736,
-  lng: 85.682066,
-};
-
-const COLLEGE_RADIUS_METERS = 200;
+// Removed hardcoded COLLEGE_LOCATION to support dynamic teacher-based location.
+const DEFAULT_RADIUS_METERS = 200;
 
 
 const CreateSession = () => {
@@ -25,7 +22,7 @@ const CreateSession = () => {
   const [department, setDepartment] = useState(user?.department || '');
   const [semester, setSemester] = useState(user?.semester || '');
   const [enableGeofencing, setEnableGeofencing] = useState(true);
-  const [radiusAllowed] = useState(COLLEGE_RADIUS_METERS);
+  const [radiusAllowed] = useState(DEFAULT_RADIUS_METERS);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sessionCode, setSessionCode] = useState(null);
 
@@ -36,7 +33,32 @@ const CreateSession = () => {
 
     setIsGenerating(true);
 
-    const submitSession = async (location = null) => {
+    const submitSession = async () => {
+      let locationPayload = null;
+      let accuracyValue = null;
+
+      if (enableGeofencing) {
+        try {
+          toast.loading("Fetching your location...", { id: 'loc-toast' });
+          const loc = await getCurrentCoordinates({ enableHighAccuracy: true });
+          
+          if (loc.accuracy > 150) {
+            toast.error(`Location accuracy too low (${Math.round(loc.accuracy)}m). Please move closer to a window.`, { id: 'loc-toast' });
+            setIsGenerating(false);
+            return;
+          }
+          
+          locationPayload = { lat: loc.lat, lng: loc.lng };
+          accuracyValue = loc.accuracy;
+          toast.success("Location locked!", { id: 'loc-toast' });
+        } catch (err) {
+          const errMsg = getGeolocationErrorMessage(err, "Location is required to start a restricted session.");
+          toast.error(errMsg, { id: 'loc-toast' });
+          setIsGenerating(false);
+          return;
+        }
+      }
+
       try {
         const res = await api.post('/sessions', {
           courseId,
@@ -44,7 +66,8 @@ const CreateSession = () => {
           topic,
           department,
           semester,
-          location,
+          location: locationPayload,
+          accuracy: accuracyValue,
           radiusAllowed: enableGeofencing ? radiusAllowed : null
         });
         
@@ -52,7 +75,6 @@ const CreateSession = () => {
         setSessionCode(code);
         toast.success("Session Created! Redirecting to Live Dashboard...");
         
-        // Wait 2 seconds before redirecting so they can see the code/success
         setTimeout(() => {
           navigate('/faculty-dashboard');
         }, 2000);
@@ -63,7 +85,7 @@ const CreateSession = () => {
       }
     };
 
-    await submitSession(enableGeofencing ? COLLEGE_LOCATION : null);
+    await submitSession();
   };
 
   return (
@@ -94,7 +116,7 @@ const CreateSession = () => {
                        </div>
                        <div>
                          <h3 className="text-[18px] font-extrabold text-gray-900 dark:text-white tracking-tight">New Session Details</h3>
-                         <p className="text-[13.5px] font-medium text-gray-500 dark:text-slate-400 mt-0.5 tracking-wide">Session geofence is locked to the campus center with a fixed 200 meter radius.</p>
+                         <p className="text-[13.5px] font-medium text-gray-500 dark:text-slate-400 mt-0.5 tracking-wide">Session geofence will be locked to your current location with a 200m radius.</p>
                        </div>
                      </div>
 
@@ -189,7 +211,7 @@ const CreateSession = () => {
                    </div>
                    <div>
                      <h4 className="text-[14px] font-black text-[#1e3a8a] dark:text-blue-400 mb-1.5 tracking-tight">Security Protocol Enabled</h4>
-                     <p className="text-[13px] font-semibold text-[#1e3a8a]/70 dark:text-slate-400 leading-relaxed pr-4">Students must enter the session code and be physically present within 200 meters of the college campus center to mark their attendance successfully.</p>
+                     <p className="text-[13px] font-semibold text-[#1e3a8a]/70 dark:text-slate-400 leading-relaxed pr-4">Students must be within 200 meters of your current starting location to mark their attendance successfully. These coordinates are frozen once the code is generated.</p>
                    </div>
                  </div>
 

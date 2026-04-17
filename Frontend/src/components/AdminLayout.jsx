@@ -44,8 +44,8 @@ const AdminLayout = ({ children }) => {
         <header className="h-16 lg:h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 z-30">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/admin-dashboard')}>
-              <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
-                <Activity className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                <img src="/logo.png" alt="Attendify Logo" className="w-full h-full object-cover" />
               </div>
               <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter hidden sm:block">Attendify</span>
 
@@ -99,7 +99,7 @@ const AdminLayout = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-4 pb-36 lg:p-8 custom-scrollbar">
           {children}
         </main>
       </div>

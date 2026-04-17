@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg'],
+      includeAssets: ['logo.png'],
       manifest: {
         name: 'Attendify',
         short_name: 'Attendify',
@@ -20,14 +20,16 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'vite.svg',
+            src: 'logo.png',
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'vite.svg',
+            src: 'logo.png',
             sizes: '512x512',
-            type: 'image/svg+xml'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       },

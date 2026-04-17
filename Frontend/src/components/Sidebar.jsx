@@ -38,8 +38,8 @@ const Sidebar = () => {
       {/* Header / Logo */}
       <div className="h-20 flex items-center px-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-blue-500 rounded-[10px] flex items-center justify-center shadow-md shadow-blue-500/20">
-            <Activity className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 rounded-[10px] flex items-center justify-center overflow-hidden shadow-md shadow-blue-500/20">
+            <img src="/logo.png" alt="Attendify Logo" className="w-full h-full object-cover" />
           </div>
           <span className="text-[19px] font-extrabold text-blue-500 tracking-tight">Attendify</span>
         </div>

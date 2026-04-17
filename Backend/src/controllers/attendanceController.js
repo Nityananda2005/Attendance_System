@@ -29,7 +29,7 @@ const hasValidCoordinates = (location) =>
 // @route   POST /api/attendance/mark
 // @access  Private/Student
 export const markAttendance = async (req, res) => {
-  const { sessionCode, location } = req.body;
+  const { sessionCode, location, accuracy } = req.body;
   const lat = location?.lat;
   const lng = location?.lng;
 
@@ -46,10 +46,15 @@ export const markAttendance = async (req, res) => {
     }
 
     // 1. Verify session constraints
-    const session = await Session.findOne({ sessionCode, status: "active" });
+    const session = await Session.findOne({ sessionCode });
 
-    if (!session) {
-      return res.status(404).json({ message: "Invalid or inactive session code" });
+    if (!session || session.status !== "active") {
+      return res.status(400).json({ message: "This session is not active or has been closed." });
+    }
+
+    // 2. Check for session expiration
+    if (session.expiresAt && Date.now() > new Date(session.expiresAt).getTime()) {
+      return res.status(400).json({ message: "This session has expired." });
     }
 
 
@@ -67,12 +72,21 @@ export const markAttendance = async (req, res) => {
 
 
 
-    // Geolocation verification is currently DISBLED as per user request
-    const geofenceEnabled = false; 
+    // Geolocation verification is now STRICTLY ENABLED
+    const geofenceEnabled = true; 
 
     if (geofenceEnabled) {
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-        return res.status(400).json({ message: "Device location is required to verify your attendance for this session." });
+        return res.status(400).json({ message: "Location permission denied. Please enable GPS to mark attendance." });
+      }
+
+      if (accuracy && accuracy > 100) {
+        return res.status(400).json({ message: "Location accuracy is too low. Please move to an open area and try again." });
+      }
+
+      if (!session.location || !session.location.lat || !session.location.lng) {
+        // Fallback or error if session has no location stored
+        return res.status(400).json({ message: "This session does not have a valid location set by the teacher." });
       }
 
       const distance = calculateDistance(
@@ -82,11 +96,14 @@ export const markAttendance = async (req, res) => {
         lng
       );
 
-      if (distance > session.radiusAllowed) {
+      const tolerance = 50;
+      const maxAllowed = (session.radiusAllowed || 200) + tolerance;
+
+      if (distance > maxAllowed) {
         return res.status(403).json({
-          message: `You are outside the allowed session area (${Math.round(distance)}m away).`,
+          message: `You are ${Math.round(distance)}m away. Move closer to the classroom to mark attendance.`,
           distance: Math.round(distance),
-          radiusAllowed: Math.round(session.radiusAllowed),
+          radiusAllowed: maxAllowed,
         });
       }
     }

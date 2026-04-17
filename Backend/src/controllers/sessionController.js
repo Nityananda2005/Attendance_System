@@ -7,21 +7,22 @@ import { sendNotificationToStudents } from "../utils/sseProvider.js";
 import { isMatchingSession } from "../utils/sessionMatchers.js";
 
 
-const COLLEGE_LOCATION = {
-  lat: 20.21736,
-  lng: 85.682066,
-};
-
-const COLLEGE_RADIUS_METERS = 200;
+// Removed hardcoded COLLEGE_LOCATION to support dynamic teacher-based location.
 
 // @desc    Create a new session (Faculty only)
 // @route   POST /api/sessions
 // @access  Private/Faculty
 export const createSession = async (req, res) => {
-  const { courseId, courseName, topic, radiusAllowed, department, semester } = req.body;
+  const { courseId, courseName, topic, radiusAllowed, department, semester, location, accuracy } = req.body;
 
   try {
-    const geofenceEnabled = radiusAllowed !== null && radiusAllowed !== undefined;
+    const geofenceEnabled = location && location.lat && location.lng;
+
+    if (geofenceEnabled && accuracy && accuracy > 100) {
+      return res.status(400).json({
+        message: "Location accuracy is too low (>100m). Please move to an open area and try again."
+      });
+    }
 
     // Generate a unique 6-character alphanumeric code
     const sessionCode = crypto.randomBytes(3).toString("hex").toUpperCase();
@@ -41,10 +42,11 @@ export const createSession = async (req, res) => {
       courseName,
       topic,
       sessionCode,
-      location: geofenceEnabled ? COLLEGE_LOCATION : undefined,
-      radiusAllowed: geofenceEnabled ? COLLEGE_RADIUS_METERS : null,
+      location: geofenceEnabled ? { lat: location.lat, lng: location.lng } : undefined,
+      radiusAllowed: 200, // Fixed 200m radius as per requirement
       department: sessionDepts,
       semester: semester || req.user.semester,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000), // Default 60 minutes duration
     });
 
 

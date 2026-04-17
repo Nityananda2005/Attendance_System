@@ -5,14 +5,16 @@ import api from '../../api/axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Info, MapPin, CheckCircle2, ShieldCheck, AlertCircle, Loader2, KeyRound
+  Info, MapPin, CheckCircle2, ShieldCheck, AlertCircle, Loader2, KeyRound, Signal
 } from 'lucide-react';
+import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
 
 const MarkAttendance = () => {
   const { user } = useContext(AuthContext);
   const [sessionCode, setSessionCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [distance, setDistance] = useState(null);
   const navigate = useNavigate();
   const inputRefs = useRef([]);
 
@@ -46,10 +48,34 @@ const MarkAttendance = () => {
     if (isVerifying || success) return;
     
     setIsVerifying(true);
+    let locationPayload = null;
+    let accuracyValue = null;
+
+    try {
+      toast.loading("Verifying your location...", { id: 'student-loc' });
+      const loc = await getCurrentCoordinates({ enableHighAccuracy: true });
+      
+      if (loc.accuracy > 150) {
+        toast.error(`Low GPS accuracy (${Math.round(loc.accuracy)}m). Please try again in an open area.`, { id: 'student-loc' });
+        setIsVerifying(false);
+        return;
+      }
+
+      locationPayload = { lat: loc.lat, lng: loc.lng };
+      accuracyValue = loc.accuracy;
+      toast.success("Location secured!", { id: 'student-loc' });
+    } catch (err) {
+      const errMsg = getGeolocationErrorMessage(err, "Location access is required to mark attendance.");
+      toast.error(errMsg, { id: 'student-loc' });
+      setIsVerifying(false);
+      return;
+    }
+
     try {
       const res = await api.post('/attendance/mark', {
         sessionCode: sessionCode.toUpperCase().trim(),
-        location: null // Geolocation verification disabled
+        location: locationPayload,
+        accuracy: accuracyValue
       });
       setSuccess(true);
       const toastId = toast.success(res.data.message || "Attendance Marked Successfully!", { duration: 2000 });
@@ -58,6 +84,9 @@ const MarkAttendance = () => {
         navigate('/history');
       }, 2000);
     } catch (err) {
+      if (err.response?.data?.distance) {
+        setDistance(err.response.data.distance);
+      }
       const errorMsg = err.response?.data?.message || err.response?.data?.error || "Verification Failed";
       toast.error(errorMsg);
       setIsVerifying(false);
@@ -154,6 +183,13 @@ const MarkAttendance = () => {
                     ))}
                   </div>
 
+                  {distance && (
+                    <div className="mb-4 px-4 py-1.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-full text-rose-600 dark:text-rose-400 text-[11px] font-bold flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      Distance: {distance} meters away
+                    </div>
+                  )}
+
                   <button 
                     onClick={handleVerify}
                     disabled={isVerifying || sessionCode.length !== 6}
@@ -196,8 +232,8 @@ const MarkAttendance = () => {
               <div className="space-y-4">
                 {[
                   { icon: CheckCircle2, title: 'Session Verified', desc: 'App handshake with academic server.' },
-                  { icon: ShieldCheck, title: 'Verify Code', desc: 'Validating session cryptographic key.' },
-                  { icon: MapPin, title: 'Location Ignored', desc: 'Geofencing bounds are currently bypassed.' },
+                  { icon: Signal, title: 'GPS Verification', desc: 'Strict location bound check enabled.' },
+                  { icon: MapPin, title: 'Geofence Active', desc: 'Checking proximity to teacher location.' },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3 group cursor-default">
                     <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 flex items-center justify-center shrink-0 text-gray-400 dark:text-slate-500 group-hover:text-blue-500 dark:text-blue-400 group-hover:border-blue-100 dark:border-blue-500/20 group-hover:bg-blue-50 dark:bg-blue-500/10 transition-all">

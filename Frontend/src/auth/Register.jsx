@@ -98,12 +98,8 @@ const Register = () => {
       {/* Navbar */}
       <nav style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', zIndex: 10, boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(59,130,246,0.35)' }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="3" y="3" width="10" height="2" rx="1" fill="white" />
-              <rect x="3" y="7.5" width="7" height="2" rx="1" fill="white" />
-              <rect x="3" y="12" width="2" height="3" rx="1" fill="white" />
-            </svg>
+          <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(59,130,246,0.35)', overflow: 'hidden' }}>
+            <img src="/logo.png" alt="Attendify Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <span style={{ fontSize: 18, fontWeight: 700, color: theme === 'dark' ? '#f8fafc' : '#1e293b', letterSpacing: '-0.3px' }}>Attendify</span>
         </div>

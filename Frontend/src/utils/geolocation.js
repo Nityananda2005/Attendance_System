@@ -11,7 +11,7 @@ export const getCurrentPosition = (options = {}) =>
 const DEFAULT_LOCATION_OPTIONS = {
   enableHighAccuracy: false,
   maximumAge: 60000,
-  timeout: 10000,
+  timeout: 15000, // Increased to 15s for slower laptop fixes
 };
 
 export const getCurrentCoordinates = async (options = {}) => {
@@ -24,6 +24,7 @@ export const getCurrentCoordinates = async (options = {}) => {
     return {
       lat: position.coords.latitude,
       lng: position.coords.longitude,
+      accuracy: position.coords.accuracy,
     };
   } catch (error) {
     const shouldRetry = error?.code === error?.TIMEOUT || error?.code === error?.POSITION_UNAVAILABLE;
@@ -42,19 +43,21 @@ export const getCurrentCoordinates = async (options = {}) => {
     return {
       lat: retryPosition.coords.latitude,
       lng: retryPosition.coords.longitude,
+      accuracy: retryPosition.coords.accuracy,
     };
   }
 };
 
 export const getGeolocationErrorMessage = (error, fallbackMessage) => {
-  switch (error?.code) {
-    case error?.PERMISSION_DENIED:
-      return "Location access blocked. Allow location permission in your browser and OS settings.";
-    case error?.POSITION_UNAVAILABLE:
-      return "Current location is unavailable right now. Make sure GPS/location services are on and try again.";
-    case error?.TIMEOUT:
-      return "Location request timed out. Move to an open area or wait a few seconds and try again.";
-    default:
-      return fallbackMessage || "Unable to fetch your current location.";
+  const code = error?.code;
+  if (code === 1) { // PERMISSION_DENIED
+    return "Location access blocked. Please allow location permission in your browser and Windows privacy settings.";
   }
+  if (code === 2) { // POSITION_UNAVAILABLE
+    return "Location signal unavailable. Ensure your Wi-Fi/GPS is active and try again.";
+  }
+  if (code === 3) { // TIMEOUT
+    return "Location request timed out. Move closer to a window or try again in a moment.";
+  }
+  return fallbackMessage || "Unable to fetch your current location. Please check your system settings.";
 };

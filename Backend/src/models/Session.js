@@ -45,6 +45,9 @@ const sessionSchema = new mongoose.Schema(
     semester: {
       type: String,
     },
+    expiresAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

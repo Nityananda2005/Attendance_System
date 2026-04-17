@@ -36,15 +36,16 @@ const StudentLayout = ({ children, title }) => {
   const handleMarkAttendanceFromNotification = async (code) => {
     if (!code) return;
     
-    const loadingToast = toast.loading("Processing...");
+    const loadingToast = toast.loading("Verifying your location...");
 
-    const submit = async (lat, lng) => {
+    const submit = async (lat, lng, accuracy) => {
       try {
-        await api.post('/attendance/mark', {
+        const res = await api.post('/attendance/mark', {
           sessionCode: code.toUpperCase(),
-          location: lat != null && lng != null ? { lat, lng } : null
+          location: { lat, lng },
+          accuracy
         });
-        toast.success("Attendance Marked Successfully!", { id: loadingToast, duration: 2000 });
+        toast.success(res.data.message || "Attendance Marked Successfully!", { id: loadingToast, duration: 2000 });
         
         setNotifications(prev => prev.filter(n => n.sessionCode !== code));
         
@@ -57,8 +58,16 @@ const StudentLayout = ({ children, title }) => {
       }
     };
 
-    // Geolocation is currently disabled
-    await submit(undefined, undefined);
+    try {
+      const loc = await getCurrentCoordinates({ enableHighAccuracy: true });
+      if (loc.accuracy > 100) {
+        toast.error("Location accuracy too low. Please move to an open area.", { id: loadingToast });
+        return;
+      }
+      await submit(loc.lat, loc.lng, loc.accuracy);
+    } catch (err) {
+      toast.error("Location access is required for attendance.", { id: loadingToast });
+    }
   };
 
   const showActiveSessionToast = (message, sessionCode) => {
@@ -198,8 +207,8 @@ const StudentLayout = ({ children, title }) => {
         {/* Navbar */}
         <header className="h-[60px] lg:h-[70px] bg-white dark:bg-slate-900 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 shrink-0 z-10 transition-colors duration-300">
           <div className="lg:hidden flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-blue-500 rounded-[10px] flex items-center justify-center shadow-md shadow-blue-500/20">
-               <span className="text-white font-black text-[14px]">A</span>
+            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center overflow-hidden shadow-md shadow-blue-500/20">
+               <img src="/logo.png" alt="Attendify Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-[16px] font-black text-blue-500 tracking-tight">Attendify</span>
           </div>
@@ -290,7 +299,7 @@ const StudentLayout = ({ children, title }) => {
         </header>
 
         {/* Scrollable page content */}
-        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 transition-colors duration-300 pb-24 lg:pb-0">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 transition-colors duration-300 pb-36 lg:pb-0">
           {children}
         </main>
 
