@@ -22,7 +22,7 @@ const CreateSession = () => {
   const [department, setDepartment] = useState(user?.department || '');
   const [semester, setSemester] = useState(user?.semester || '');
   const [enableGeofencing, setEnableGeofencing] = useState(true);
-  const [radiusAllowed] = useState(DEFAULT_RADIUS_METERS);
+  const [radiusAllowed, setRadiusAllowed] = useState(DEFAULT_RADIUS_METERS);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sessionCode, setSessionCode] = useState(null);
 
@@ -116,7 +116,7 @@ const CreateSession = () => {
                        </div>
                        <div>
                          <h3 className="text-[18px] font-extrabold text-gray-900 dark:text-white tracking-tight">New Session Details</h3>
-                         <p className="text-[13.5px] font-medium text-gray-500 dark:text-slate-400 mt-0.5 tracking-wide">Session geofence will be locked to your current location with a 200m radius.</p>
+                         <p className="text-[13.5px] font-medium text-gray-500 dark:text-slate-400 mt-0.5 tracking-wide">Session geofence will be locked to your current location with a {radiusAllowed}m radius.</p>
                        </div>
                      </div>
 
@@ -176,16 +176,17 @@ const CreateSession = () => {
                          </div>
                          <input 
                            type="range" 
-                           min="10" 
-                           max="200" 
+                           min="50" 
+                           max="500" 
+                           step="50"
                            value={radiusAllowed}
-                           disabled
+                           onChange={(e) => setRadiusAllowed(parseInt(e.target.value))}
                            className="w-full accent-blue-500 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
                          />
                          <div className="flex items-center justify-between text-[10px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-3">
-                            <span>10M</span>
-                            <span>100M</span>
-                            <span>200M</span>
+                            <span>50M</span>
+                            <span>250M</span>
+                            <span>500M</span>
                          </div>
                        </div>
 
@@ -211,7 +212,7 @@ const CreateSession = () => {
                    </div>
                    <div>
                      <h4 className="text-[14px] font-black text-[#1e3a8a] dark:text-blue-400 mb-1.5 tracking-tight">Security Protocol Enabled</h4>
-                     <p className="text-[13px] font-semibold text-[#1e3a8a]/70 dark:text-slate-400 leading-relaxed pr-4">Students must be within 200 meters of your current starting location to mark their attendance successfully. These coordinates are frozen once the code is generated.</p>
+                     <p className="text-[13px] font-semibold text-[#1e3a8a]/70 dark:text-slate-400 leading-relaxed pr-4">Students must be within {radiusAllowed} meters of your current starting location to mark their attendance successfully. These coordinates are frozen once the code is generated.</p>
                    </div>
                  </div>
 
