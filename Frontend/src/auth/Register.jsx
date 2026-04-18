@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { toast } from 'react-hot-toast';
+import { ACADEMIC_STRUCTURE, SEMESTERS } from '../constants/academicConstants';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -10,7 +11,8 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('student');
-  const [department, setDepartment] = useState('');
+  const [program, setProgram] = useState('');
+  const [branch, setBranch] = useState('');
   const [semester, setSemester] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -18,24 +20,7 @@ const Register = () => {
   const { registerAction } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const BRANCHES = [
-    'Computer Science (CSE)',
-    'Information Technology (IT)',
-    'Artificial Intelligence (AI)',
-    'Data Science (DS)',
-    'Mechanical Engineering (ME)',
-
-    'Civil Engineering (CE)',
-    'Electrical Engineering (EE)',
-    'Electronics & Comm (ECE)',
-    'Chemical Engineering (CHE)',
-    'Architecture (B.Arch)',
-    'Other'
-  ];
-
-  const SEMESTERS = [
-    '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'
-  ];
+  // Constant arrays moved to academicConstants.js
 
 
   const handleRegister = async (e) => {
@@ -51,9 +36,10 @@ const Register = () => {
         password,
         role,
         ...(role === 'student' && {
-          enrollmentId: Math.random().toString(36).substring(7).toUpperCase(),
-          department,
-          semester,
+          enrollmentId: `STU-${Math.random().toString(36).substring(7).toUpperCase()}`,
+          program,
+          branch,
+          semester: Number(semester),
         }),
       });
       if (userData.role === 'faculty') {
@@ -204,26 +190,57 @@ const Register = () => {
               <div>
                 <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Academic Info</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Department</label>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Program</label>
                     <div style={{ position: 'relative' }}>
                       <IconWrap>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M6 21V9M18 21V9M9 21v-6h6v6M3 9l9-6 9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 14L2 9l10-5 10 5-10 5z"/><path d="M6 11.5V17c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5.5" stroke="currentColor" strokeWidth="2"/></svg>
                       </IconWrap>
                       <select 
-                        value={department} 
-                        onChange={e => setDepartment(e.target.value)} 
+                        value={program} 
+                        onChange={e => {
+                          const newProg = e.target.value;
+                          setProgram(newProg);
+                          // Auto-select if only one branch
+                          const availableBranches = ACADEMIC_STRUCTURE[newProg] || [];
+                          if (newProg === 'MCA' && availableBranches.length === 1) {
+                            setBranch(availableBranches[0]);
+                          } else {
+                            setBranch('');
+                          }
+                        }} 
                         required 
                         style={inputStyle} 
                         onFocus={inputFocus} 
                         onBlur={inputBlur}
                       >
-                        <option value="">Select Branch...</option>
-                        {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                        <option value="">Select Program...</option>
+                        {Object.keys(ACADEMIC_STRUCTURE).map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
-
                     </div>
                   </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Branch</label>
+                    <div style={{ position: 'relative' }}>
+                      <IconWrap>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M6 21V9M18 21V9M9 21v-6h6v6M3 9l9-6 9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </IconWrap>
+                      <select 
+                        value={branch} 
+                        onChange={e => setBranch(e.target.value)} 
+                        required 
+                        disabled={!program}
+                        style={{ ...inputStyle, opacity: !program ? 0.6 : 1, cursor: !program ? 'not-allowed' : 'pointer' }} 
+                        onFocus={inputFocus} 
+                        onBlur={inputBlur}
+                      >
+                        <option value="">{program ? 'Select Branch...' : 'Select Program First'}</option>
+                        {(ACADEMIC_STRUCTURE[program] || []).map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: theme === 'dark' ? '#e2e8f0' : '#374151', marginBottom: 7 }}>Semester</label>
                     <div style={{ position: 'relative' }}>
@@ -239,9 +256,8 @@ const Register = () => {
                         onBlur={inputBlur}
                       >
                         <option value="">Select Semester...</option>
-                        {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
+                        {SEMESTERS.map(s => <option key={s} value={s}>{s === 1 ? '1st' : s === 2 ? '2nd' : s === 3 ? '3rd' : `${s}th`} Semester</option>)}
                       </select>
-
                     </div>
                   </div>
                 </div>

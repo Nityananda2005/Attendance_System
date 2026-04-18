@@ -26,28 +26,18 @@ import {
 
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { ACADEMIC_STRUCTURE, formatSemester } from '../../constants/academicConstants';
 
 
-const BRANCHES = [
-  'All Branches',
-  'CSE',
-  'IT',
-  'AI',
-  'DS',
-  'ECE',
-
-  'EE',
-  'ME',
-  'CE',
-  'Architecture',
-  'Other'
-];
+const PROGRAMS = ["All Programs", ...Object.keys(ACADEMIC_STRUCTURE)];
+const ALL_BRANCHES = ["All Branches", ...new Set(Object.values(ACADEMIC_STRUCTURE).flat())];
 
 
 const Students = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeProgram, setActiveProgram] = useState('All Programs');
   const [activeBranch, setActiveBranch] = useState('All Branches');
   
   // Pagination States
@@ -86,7 +76,7 @@ const Students = () => {
 
   useEffect(() => {
     fetchStudents();
-  }, [currentPage, activeBranch]);
+  }, [currentPage, activeBranch, activeProgram]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,7 +92,7 @@ const Students = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/admin/students?page=${currentPage}&limit=${limit}&search=${searchQuery}&department=${activeBranch}`);
+      const res = await api.get(`/admin/students?page=${currentPage}&limit=${limit}&search=${searchQuery}&department=${activeBranch}&program=${activeProgram}`);
       setStudents(res.data.students);
       setTotalPages(res.data.totalPages);
       setTotalCount(res.data.totalStudents);
@@ -128,7 +118,7 @@ const Students = () => {
   const handleExportCSV = async () => {
     try {
       setExporting(true);
-      const res = await api.get(`/admin/students?page=1&limit=0&search=${searchQuery}&department=${activeBranch}`);
+      const res = await api.get(`/admin/students?page=1&limit=0&search=${searchQuery}&department=${activeBranch}&program=${activeProgram}`);
       const allData = res.data.students;
 
       if (!allData || allData.length === 0) {
@@ -136,12 +126,13 @@ const Students = () => {
         return;
       }
 
-      const headers = ["Name", "Enrollment ID", "Email", "Branch", "Mobile", "Semester", "Account Created"];
+      const headers = ["Name", "Enrollment ID", "Email", "Program", "Branch", "Mobile", "Semester", "Account Created"];
       const rows = allData.map(s => [
         `"${s.name}"`,
         `"${s.enrollmentId || 'N/A'}"`,
         `"${s.email}"`,
-        `"${s.department || 'N/A'}"`,
+        `"${s.program || 'N/A'}"`,
+        `"${s.branch || s.department || 'N/A'}"`,
         `"${s.phone || 'N/A'}"`,
         `"${s.semester || 'N/A'}"`,
         `"${new Date(s.createdAt).toLocaleDateString()}"`
@@ -218,21 +209,42 @@ const Students = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {BRANCHES.map((branch) => (
-              <button
-                key={branch}
-                onClick={() => setActiveBranch(branch)}
-                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold transition-all border ${
-                  activeBranch === branch
-                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20'
-                  : 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 text-gray-500 dark:text-slate-400 hover:border-blue-200'
-                }`}
-              >
-                {branch}
-              </button>
-            ))}
+          <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-none">
+            <div className="flex items-center gap-1.5 min-w-max">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Program:</span>
+              {PROGRAMS.map((prog) => (
+                <button
+                  key={prog}
+                  onClick={() => { setActiveProgram(prog); setActiveBranch('All Branches'); }}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                    activeProgram === prog
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-md'
+                    : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-500'
+                  }`}
+                >
+                  {prog}
+                </button>
+              ))}
+            </div>
+            
+            <div className="w-[1px] h-6 bg-gray-200 dark:bg-slate-800 mx-2 flex-shrink-0" />
 
+            <div className="flex items-center gap-1.5 min-w-max">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Branch:</span>
+              {(activeProgram === 'All Programs' ? ALL_BRANCHES : ["All Branches", ...ACADEMIC_STRUCTURE[activeProgram]]).map((branch) => (
+                <button
+                  key={branch}
+                  onClick={() => setActiveBranch(branch)}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                    activeBranch === branch
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-md'
+                    : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-500'
+                  }`}
+                >
+                  {branch}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -245,6 +257,7 @@ const Students = () => {
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Avatar</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Student Name</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Roll Number</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Program</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Branch</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mobile Number</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Semester</th>
@@ -278,8 +291,13 @@ const Students = () => {
                         <span className="text-sm font-mono text-gray-600 dark:text-slate-300 font-bold">{student.enrollmentId || 'NOT_SET'}</span>
                       </td>
                       <td className="px-6 py-4">
+                        <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold ring-1 ring-blue-100 dark:ring-blue-800">
+                          {student.program || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
                         <span className="px-2.5 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-bold ring-1 ring-gray-200 dark:ring-slate-700">
-                          {student.department || 'N/A'}
+                          {student.branch || (Array.isArray(student.department) ? student.department[0] : student.department) || 'N/A'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -288,9 +306,8 @@ const Students = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-
                         <div className="flex flex-col gap-1">
-                           <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{student.semester || '1st'} Semester</span>
+                           <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{formatSemester(student.semester)}</span>
                            <span className="text-[10px] text-gray-400 font-medium italic">Batch: {student.batchSection || 'A'}</span>
                         </div>
                       </td>

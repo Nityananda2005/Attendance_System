@@ -5,6 +5,7 @@ import StudentLayout from '../../components/StudentLayout';
 
 import { toast } from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { ACADEMIC_STRUCTURE, SEMESTERS, formatSemester } from '../../constants/academicConstants';
 import { 
   Pencil, ShieldCheck, Clock, AlertCircle, BookOpen, GraduationCap, 
   Users, CalendarDays, Hash, Mail, Phone, CheckCircle2, Award, Book, Save, X,
@@ -35,6 +36,8 @@ const Profile = () => {
           name: res.data.name || '',
           enrollmentId: res.data.enrollmentId || '',
           department: res.data.department || '',
+          program: res.data.program || '',
+          branch: res.data.branch || '',
           batchSection: res.data.batchSection || '',
           semester: res.data.semester || '',
           residence: res.data.residence || '',
@@ -65,45 +68,43 @@ const Profile = () => {
     }
   };
 
-  const BRANCHES = [
-    'Computer Science (CSE)',
-    'Information Technology (IT)',
-    'Artificial Intelligence (AI)',
-    'Data Science (DS)',
-    'Mechanical Engineering (ME)',
-    'Civil Engineering (CE)',
-
-    'Electrical Engineering (EE)',
-    'Electronics & Comm (ECE)',
-    'Chemical Engineering (CHE)',
-    'Architecture (B.Arch)',
-    'Other'
-  ];
-
-  const SEMESTERS = [
-    '1st',
-    '2nd',
-    '3rd',
-    '4th',
-    '5th',
-    '6th',
-    '7th',
-    '8th'
-  ];
+  // Constants moved to academicConstants.js
 
 
   const renderField = (name, value, label) => {
     if (isEditing) {
-      if (name === 'department') {
+      if (name === 'program') {
+        return (
+          <select
+            name={name}
+            value={formData[name] || ''}
+            onChange={(e) => {
+              const newProg = e.target.value;
+              setFormData(prev => ({
+                ...prev,
+                program: newProg,
+                branch: ACADEMIC_STRUCTURE[newProg]?.length === 1 ? ACADEMIC_STRUCTURE[newProg][0] : ''
+              }));
+            }}
+            className="w-full bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 dark:text-slate-200 outline-none transition-all"
+          >
+            <option value="">Select Program...</option>
+            {Object.keys(ACADEMIC_STRUCTURE).map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        );
+      }
+
+      if (name === 'branch') {
         return (
           <select
             name={name}
             value={formData[name] || ''}
             onChange={handleChange}
-            className="w-full bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 dark:text-slate-200 outline-none transition-all"
+            disabled={!formData.program}
+            className="w-full bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 dark:text-slate-200 outline-none transition-all disabled:opacity-60"
           >
-            <option value="">Select Branch...</option>
-            {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+            <option value="">{formData.program ? 'Select Branch...' : 'Select Program First'}</option>
+            {(ACADEMIC_STRUCTURE[formData.program] || []).map(b => <option key={b} value={b}>{b}</option>)}
           </select>
         );
       }
@@ -117,10 +118,13 @@ const Profile = () => {
             className="w-full bg-white dark:bg-slate-800 border border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-1.5 text-[13px] font-bold text-gray-800 dark:text-slate-200 outline-none transition-all"
           >
             <option value="">Select Semester...</option>
-            {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
+            {SEMESTERS.map(s => <option key={s} value={s}>{s === 1 ? '1st' : s === 2 ? '2nd' : s === 3 ? '3rd' : `${s}th`} Semester</option>)}
           </select>
         );
       }
+
+      const isReadOnlyField = name === 'department'; // department is derived/old
+      if (isReadOnlyField) return <p className="text-[13px] font-bold text-gray-400">{value || 'N/A'}</p>;
 
       return (
         <input
@@ -133,6 +137,9 @@ const Profile = () => {
         />
       );
     }
+    
+    if (name === 'semester') return <p className="text-[13px] font-bold text-gray-800 dark:text-slate-200">{formatSemester(value)}</p>;
+    
     return <p className="text-[13px] font-bold text-gray-800 dark:text-slate-200">{value || 'Not specified'}</p>;
   };
 
@@ -309,7 +316,8 @@ const Profile = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                   {[
-                    { icon: GraduationCap, label: 'BRANCH / DEPARTMENT', name: 'department', value: profile.department },
+                    { icon: GraduationCap, label: 'ACADEMIC PROGRAM', name: 'program', value: profile.program },
+                    { icon: BookOpen, label: 'BRANCH / SPEC', name: 'branch', value: profile.branch },
                     { icon: Users, label: 'BATCH & SECTION', name: 'batchSection', value: profile.batchSection },
                     { icon: CalendarDays, label: 'CURRENT SEMESTER', name: 'semester', value: profile.semester },
                     { icon: Hash, label: 'REGISTRATION / ROLL NUMBER', name: 'enrollmentId', value: profile.enrollmentId },

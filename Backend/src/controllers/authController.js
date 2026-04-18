@@ -10,7 +10,7 @@ const generateToken = (id) => {
 };
 
 export const registerUser = async (req, res) => {
-  const { name, email, password, role, enrollmentId, department, semester } = req.body;
+  const { name, email, password, role, enrollmentId, program, branch, semester } = req.body;
 
   try {
     if (!name || !email || !password) {
@@ -42,7 +42,9 @@ export const registerUser = async (req, res) => {
       rawPassword: password,
       role: userRole,
       enrollmentId: enrollmentId?.trim() || `STU-${Math.random().toString(36).substring(7).toUpperCase()}`,
-      department,
+      department: branch ? [branch] : [], // For backward compatibility
+      program,
+      branch,
       semester
     });
 
@@ -54,6 +56,8 @@ export const registerUser = async (req, res) => {
         role: user.role,
         enrollmentId: user.enrollmentId,
         department: user.department,
+        program: user.program,
+        branch: user.branch,
         semester: user.semester,
         batchSection: user.batchSection,
         residence: user.residence,
@@ -87,6 +91,8 @@ export const loginUser = async (req, res) => {
         role: user.role,
         enrollmentId: user.enrollmentId,
         department: user.department,
+        program: user.program,
+        branch: user.branch,
         semester: user.semester,
         batchSection: user.batchSection,
         residence: user.residence,
@@ -116,7 +122,7 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { department, batchSection, semester, residence, phone, emergencyContact, name, enrollmentId } = req.body;
+    const { department, program, branch, batchSection, semester, residence, phone, emergencyContact, name, enrollmentId } = req.body;
     
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -126,6 +132,12 @@ export const updateProfile = async (req, res) => {
     if (name) user.name = name;
     if (enrollmentId !== undefined) user.enrollmentId = enrollmentId;
     if (department !== undefined) user.department = department;
+    if (program !== undefined) user.program = program;
+    if (branch !== undefined) {
+      user.branch = branch;
+      // Also update department array for backward compatibility
+      user.department = [branch];
+    }
     if (batchSection !== undefined) user.batchSection = batchSection;
     if (semester !== undefined) user.semester = semester;
     if (residence !== undefined) user.residence = residence;
@@ -142,6 +154,8 @@ export const updateProfile = async (req, res) => {
       role: updatedUser.role,
       enrollmentId: updatedUser.enrollmentId,
       department: updatedUser.department,
+      program: updatedUser.program,
+      branch: updatedUser.branch,
       batchSection: updatedUser.batchSection,
       semester: updatedUser.semester,
       residence: updatedUser.residence,

@@ -5,8 +5,9 @@ import api from '../../api/axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, Target, Sparkles, CheckCircle2, AlertTriangle, ArrowRight,
-  BookOpen, Book, QrCode, History, User, MoreVertical, MapPin, Flame
+  BookOpen, Book, QrCode, History, User, MoreVertical, MapPin, Flame, GraduationCap
 } from 'lucide-react';
+import { formatSemester } from '../../constants/academicConstants';
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useContext(AuthContext);
@@ -20,8 +21,12 @@ const Dashboard = () => {
     if (authLoading) return;
 
     // 1. Check if profile is complete
-    const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
+    const requiredFields = ['program', 'branch', 'semester', 'batchSection', 'residence', 'phone'];
     const isProfileIncomplete = !user || requiredFields.some(field => {
+      // For backward compatibility, check department if branch is missing
+      if (field === 'branch' && !user.branch && user.department?.length > 0) return false;
+      if (field === 'program' && !user.program) return true; // Program is now mandatory
+      
       const val = user[field];
       return !val || (Array.isArray(val) ? val.length === 0 : val.toString().trim() === '');
     });
@@ -109,12 +114,17 @@ const Dashboard = () => {
             <div className="flex items-center gap-2 flex-wrap">
               {user?.semester && (
                 <span className="px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-[11px] font-bold border border-blue-100 dark:border-blue-500/20">
-                  {user.semester}
+                  {formatSemester(user.semester)}
                 </span>
               )}
-              {user?.department && (
+              {user?.program && (
+                <span className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-[11px] font-bold border border-indigo-100 dark:border-indigo-500/20">
+                  {user.program}
+                </span>
+              )}
+              {(user?.branch || (user?.department && user.department.length > 0)) && (
                 <span className="px-3 py-1.5 bg-gray-100 dark:bg-slate-700/50 text-gray-600 dark:text-slate-400 rounded-full text-[11px] font-bold">
-                  {user.department}
+                  {user.branch || user.department[0]}
                 </span>
               )}
             </div>

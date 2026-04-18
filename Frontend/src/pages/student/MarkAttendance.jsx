@@ -52,10 +52,10 @@ const MarkAttendance = () => {
     let accuracyValue = null;
 
     try {
-      toast.loading("Verifying your location...", { id: 'student-loc' });
-      const loc = await getCurrentCoordinates({ enableHighAccuracy: true });
+      toast.loading("Determining your location...", { id: 'student-loc' });
+      const loc = await getCurrentCoordinates();
       
-      if (loc.accuracy > 150) {
+      if (loc.accuracy > 250) {
         toast.error(`Low GPS accuracy (${Math.round(loc.accuracy)}m). Please try again in an open area.`, { id: 'student-loc' });
         setIsVerifying(false);
         return;

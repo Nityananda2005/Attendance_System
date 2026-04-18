@@ -31,9 +31,11 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     department: { type: [String], default: [] },
-
+    program: { type: String }, // e.g., B.Tech, MCA, MBA
+    branch: { type: String },  // e.g., CSE, IT, HR...
+    
     batchSection: { type: String },
-    semester: { type: String },
+    semester: { type: mongoose.Schema.Types.Mixed }, // Can be Number or String for backward compatibility
     residence: { type: String },
     phone: { type: String },
     emergencyContact: { type: String },

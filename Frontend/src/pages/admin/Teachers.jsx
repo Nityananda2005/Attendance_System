@@ -22,17 +22,9 @@ import {
 
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { ACADEMIC_STRUCTURE } from '../../constants/academicConstants';
 
-const DEPARTMENTS = [
-  "Computer Science and Engineering (CSE)",
-  "Information Technology (IT)",
-  "Electronics and Communication Engineering (ECE)",
-  "Electrical Engineering (EE)",
-  "Mechanical Engineering (ME)",
-  "Civil Engineering (CE)",
-  "Artificial Intelligence and Machine Learning (AI/ML)",
-  "Data Science (DS)"
-];
+const PROGRAMS = Object.keys(ACADEMIC_STRUCTURE);
 
 const Teachers = () => {
 
@@ -55,7 +47,8 @@ const Teachers = () => {
     name: '',
     email: '',
     password: '',
-    department: [] // Changed to array
+    program: '',
+    department: [] 
   });
 
 
@@ -112,7 +105,7 @@ const Teachers = () => {
     e.preventDefault();
     try {
       if (editingTeacher) {
-        await api.put(`/admin/teachers/${editingTeacher._id}`, formData);
+        await api.put(`/admin/teachers/${editingTeacher._id}`, { ...formData, branch: formData.department[0] });
         toast.success("Teacher profile updated");
       } else {
         await api.post('/admin/teachers', formData);
@@ -120,7 +113,7 @@ const Teachers = () => {
       }
       setShowModal(false);
       setEditingTeacher(null);
-      setFormData({ name: '', email: '', password: '', department: [] });
+      setFormData({ name: '', email: '', password: '', program: '', department: [] });
       fetchTeachers();
 
     } catch (err) {
@@ -225,7 +218,7 @@ const Teachers = () => {
             <button 
               onClick={() => {
                 setEditingTeacher(null);
-                setFormData({ name: '', email: '', password: '', department: [] });
+                setFormData({ name: '', email: '', password: '', program: '', department: [] });
                 setShowModal(true);
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all"
@@ -254,9 +247,11 @@ const Teachers = () => {
             value={deptFilter}
             onChange={(e) => setDeptFilter(e.target.value)}
           >
-            <option>All Departments</option>
-            {DEPARTMENTS.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
+            <option value="All Departments">All Branches</option>
+            {PROGRAMS.map(prog => (
+               ACADEMIC_STRUCTURE[prog].map(branch => (
+                 <option key={`${prog}-${branch}`} value={branch}>{prog} - {branch}</option>
+               ))
             ))}
           </select>
 
@@ -276,7 +271,8 @@ const Teachers = () => {
                 <tr className="border-b border-gray-100 dark:border-slate-800">
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Teacher Name</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest hidden md:table-cell">Email Address</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Department</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Program</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Branches</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Password</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest hidden lg:table-cell">Joined Date</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
@@ -307,13 +303,17 @@ const Teachers = () => {
                         <p className="text-sm text-gray-600 dark:text-slate-400">{teacher.email}</p>
                       </td>
                       <td className="px-6 py-4">
+                        <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold ring-1 ring-blue-100 dark:ring-blue-800">
+                          {teacher.program || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1.5 max-w-[200px]">
                           {Array.isArray(teacher.department) && teacher.department.length > 0 ? (
                             teacher.department
-                               .filter(dept => dept && DEPARTMENTS.includes(dept)) // Cleanup any garbaged strings or individual letters
                                .map((dept, idx) => (
-                              <span key={idx} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-lg border border-blue-100 dark:border-blue-800/50">
-                                {dept.split('(')[1]?.replace(')', '') || dept}
+                              <span key={idx} className="px-2 py-0.5 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-[10px] font-bold rounded-lg border border-gray-100 dark:border-slate-800">
+                                {dept}
                               </span>
                             ))
                           ) : (
@@ -352,6 +352,7 @@ const Teachers = () => {
                               setFormData({
                                 name: teacher.name,
                                 email: teacher.email,
+                                program: teacher.program || '',
                                 department: Array.isArray(teacher.department) ? teacher.department : [teacher.department],
                                 password: ''
                               });
@@ -513,27 +514,44 @@ const Teachers = () => {
 
                 </div>
               </div>
+              <div className="flex items-center gap-4">
+                <label className="w-1/3 text-sm font-bold text-gray-700 dark:text-slate-300">Program</label>
+                <select 
+                  required
+                  className="w-2/3 px-4 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-white"
+                  value={formData.program}
+                  onChange={(e) => setFormData({...formData, program: e.target.value, department: []})}
+                >
+                  <option value="">Select Program...</option>
+                  {PROGRAMS.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-700 dark:text-slate-300">Assign Departments</label>
+                <label className="text-sm font-bold text-gray-700 dark:text-slate-300">Assign Branches {formData.program ? `(${formData.program})` : ''}</label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50/50 dark:bg-slate-900/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800">
-                  {DEPARTMENTS.map((dept) => (
-                    <label key={dept} className="flex items-center gap-3 cursor-pointer group">
-                      <div className="relative flex items-center">
-                        <input 
-                          type="checkbox"
-                          className="peer sr-only"
-                          checked={formData.department?.includes(dept)}
-                          onChange={() => handleDeptToggle(dept)}
-                        />
-                        <div className="w-5 h-5 border-2 border-gray-300 dark:border-slate-700 rounded-md peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
-                          <CheckCircle className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                  {!formData.program ? (
+                    <p className="col-span-2 text-xs text-gray-400 italic py-2">Please select a program first to see branches.</p>
+                  ) : (
+                    (ACADEMIC_STRUCTURE[formData.program] || []).map((branch) => (
+                      <label key={branch} className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative flex items-center">
+                          <input 
+                            type="checkbox"
+                            className="peer sr-only"
+                            checked={formData.department?.includes(branch)}
+                            onChange={() => handleDeptToggle(branch)}
+                          />
+                          <div className="w-5 h-5 border-2 border-gray-300 dark:border-slate-700 rounded-md peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                            <CheckCircle className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                          </div>
                         </div>
-                      </div>
-                      <span className="text-xs font-medium text-gray-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {dept}
-                      </span>
-                    </label>
-                  ))}
+                        <span className="text-xs font-medium text-gray-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {branch}
+                        </span>
+                      </label>
+                    ))
+                  )}
                 </div>
               </div>
 

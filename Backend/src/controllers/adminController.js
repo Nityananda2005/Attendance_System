@@ -220,7 +220,7 @@ export const getTeachers = async (req, res) => {
  */
 export const addTeacher = async (req, res) => {
   try {
-    const { name, email, password, department } = req.body;
+    const { name, email, password, department, program, branch } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -235,9 +235,11 @@ export const addTeacher = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      rawPassword: password, // Store plain text for Admin
+      rawPassword: password,
       role: "faculty",
-      department
+      department: department || (branch ? [branch] : []),
+      program,
+      branch
     });
 
 
@@ -282,7 +284,7 @@ export const deleteTeacher = async (req, res) => {
  */
 export const updateTeacher = async (req, res) => {
   try {
-    const { name, email, password, department } = req.body;
+    const { name, email, password, department, program, branch } = req.body;
     const teacherId = req.params.id;
 
     // 1. Initial checks
@@ -295,6 +297,8 @@ export const updateTeacher = async (req, res) => {
     const updateData = {};
     if (name) updateData.name = name;
     if (department) updateData.department = department;
+    if (program) updateData.program = program;
+    if (branch) updateData.branch = branch;
     
     if (email && email !== teacher.email) {
       const emailExists = await User.findOne({ email });
@@ -337,6 +341,7 @@ export const getStudents = async (req, res) => {
     const skip = limit === 0 ? 0 : (page - 1) * limit;
     const search = req.query.search || "";
     const department = req.query.department || "All Branches";
+    const program = req.query.program || "All Programs";
 
     const query = { role: "student" };
     
@@ -348,8 +353,15 @@ export const getStudents = async (req, res) => {
       ];
     }
 
+    if (program !== "All Programs") {
+      query.program = program;
+    }
+
     if (department !== "All Branches" && department !== "All Departments") {
-      query.department = { $regex: department, $options: "i" }; 
+      query.$or = (query.$or || []).concat([
+        { branch: { $regex: department, $options: "i" } },
+        { department: { $regex: department, $options: "i" } }
+      ]);
     }
 
 
@@ -397,7 +409,7 @@ export const deleteUser = async (req, res) => {
  */
 export const updateStudent = async (req, res) => {
   try {
-    const { name, email, enrollmentId, department, semester, password } = req.body;
+    const { name, email, enrollmentId, department, program, branch, semester, password } = req.body;
     const student = await User.findById(req.params.id);
 
     if (!student || student.role !== "student") {
@@ -407,8 +419,12 @@ export const updateStudent = async (req, res) => {
     const updateData = {};
     if (name) updateData.name = name;
     if (enrollmentId) updateData.enrollmentId = enrollmentId;
-    if (department) updateData.department = department;
-    if (semester) updateData.semester = semester;
+    if (program) updateData.program = program;
+    if (branch) {
+      updateData.branch = branch;
+      updateData.department = [branch];
+    }
+    if (semester !== undefined) updateData.semester = semester;
 
     if (email && email !== student.email) {
       const emailExists = await User.findOne({ email });

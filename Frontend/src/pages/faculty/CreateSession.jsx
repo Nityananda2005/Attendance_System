@@ -39,10 +39,10 @@ const CreateSession = () => {
 
       if (enableGeofencing) {
         try {
-          toast.loading("Fetching your location...", { id: 'loc-toast' });
-          const loc = await getCurrentCoordinates({ enableHighAccuracy: true });
+          toast.loading("Determining your location...", { id: 'loc-toast' });
+          const loc = await getCurrentCoordinates();
           
-          if (loc.accuracy > 150) {
+          if (loc.accuracy > 250) {
             toast.error(`Location accuracy too low (${Math.round(loc.accuracy)}m). Please move closer to a window.`, { id: 'loc-toast' });
             setIsGenerating(false);
             return;
