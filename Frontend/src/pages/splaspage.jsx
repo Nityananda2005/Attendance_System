@@ -105,10 +105,10 @@ const SplashPage = () => {
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <GraduationCap className="text-white" size={22} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-blue-500/20">
+              <img src="/logo.png" alt="Attendify Logo" className="w-full h-full object-cover" />
             </div>
-            <span className={`text-xl font-extrabold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+            <span className={`text-lg sm:text-xl font-extrabold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-blue-500'}`}>
               Attendify
             </span>
           </div>
@@ -128,21 +128,21 @@ const SplashPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-4">
             <button
               onClick={toggleTheme}
-              className={`p-2.5 rounded-xl border transition-all ${
+              className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
                 theme === 'dark' 
                   ? 'bg-slate-800 border-slate-700 text-yellow-400 hover:bg-slate-700' 
                   : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              {theme === 'dark' ? <Sun size={18} className="sm:size-5" /> : <Moon size={18} className="sm:size-5" />}
             </button>
             
             <button
               onClick={() => navigate('/login')}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm shadow-lg shadow-blue-500/25 hover:scale-105 active:scale-95 transition-all"
+              className="px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 hover:scale-105 active:scale-95 transition-all"
             >
               Sign In
             </button>
@@ -184,10 +184,10 @@ const SplashPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
+      <section className="relative pt-28 pb-16 md:pt-24 md:pb-24 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div className="z-10 text-center lg:text-left">
-            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 border backdrop-blur-md ${
+            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 md:mb-4 border backdrop-blur-md ${
               theme === 'dark' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-blue-50 border-blue-100 text-blue-600'
             }`}>
               <span className="relative flex h-2 w-2">
@@ -197,13 +197,15 @@ const SplashPage = () => {
               <span className="text-xs font-bold uppercase tracking-wider">Secure Campus Hub</span>
             </div>
             
-            <h1 className={`text-5xl md:text-7xl font-black mb-8 leading-[1.1] tracking-tight ${
+            <h1 className={`text-4xl md:text-7xl font-black mb-6 md:mb-5 leading-[1.2] md:leading-[1.1] tracking-tight ${
               theme === 'dark' ? 'text-white' : 'text-slate-900'
             }`}>
-              Smart <span className="bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">Attendance</span> for Next-Gen Colleges
+              Smart <br className="md:hidden" /> 
+              <span className="bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">Attendance</span> 
+              <br className="md:hidden" /> for Next-Gen <br className="md:hidden" /> Colleges
             </h1>
             
-            <p className={`text-lg md:text-xl mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed ${
+            <p className={`text-[15px] md:text-lg mb-8 md:mb-6 max-w-xl mx-auto lg:mx-0 leading-relaxed ${
               theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
             }`}>
               Eliminate proxy attendance with secure location-based verification. Real-time tracking, deep analytics, and seamless academic integration.
@@ -228,7 +230,7 @@ const SplashPage = () => {
               </button>
             </div>
 
-            <div className="mt-12 flex items-center justify-center lg:justify-start gap-8 opacity-60 grayscale hover:grayscale-0 transition-all">
+            <div className="mt-10 md:mt-8 flex items-center justify-center lg:justify-start gap-6 md:gap-8 opacity-60 grayscale hover:grayscale-0 transition-all">
               <div className="flex items-center gap-2">
                 <Users size={18} />
                 <span className="text-sm font-semibold">10k+ Students</span>
@@ -468,10 +470,10 @@ const SplashPage = () => {
       }`}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white">
-              <GraduationCap size={16} />
+            <div className="w-8 h-8 rounded-lg overflow-hidden shadow-md">
+              <img src="/logo.png" alt="Attendify" className="w-full h-full object-cover" />
             </div>
-            <span className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Attendify</span>
+            <span className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-blue-500'}`}>Attendify</span>
           </div>
           
           <div className="flex flex-wrap justify-center gap-8 text-sm font-medium">
