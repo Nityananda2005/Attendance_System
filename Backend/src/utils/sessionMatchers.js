@@ -39,6 +39,15 @@ export const isMatchingSession = (student, session) => {
     });
   });
 
+  // 1.5 Additional Course (Workshop) Matching
+  const workshops = ['AI/ML', 'Soft Skill'];
+  const matchedWorkshop = workshops.find(w => session.courseName?.includes(w));
+  
+  if (matchedWorkshop) {
+    const hasEnrolled = (student.additionalCourses || []).some(sCourse => sCourse.includes(matchedWorkshop));
+    if (!hasEnrolled) return false;
+  }
+
   // 2. Flexible Semester Match
   const sSemRaw = student.semester;
   const tSemRaw = session.semester;

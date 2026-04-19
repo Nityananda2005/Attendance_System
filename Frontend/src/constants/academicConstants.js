@@ -16,7 +16,7 @@ export const ACADEMIC_STRUCTURE = {
     'Marketing'
   ],
   'Common': [
-    'AI / ML Workshop',
+    'AI/ML',
     'Soft Skill'
   ]
 };
