@@ -304,6 +304,7 @@ const FacultyLayout = ({ children }) => {
             { to: '/faculty-dashboard', icon: LayoutDashboard, label: 'Home' },
             { to: '/create-session', icon: PlusSquare, label: 'Create' },
             { to: '/attendance-list', icon: List, label: 'History' },
+            { to: '/faculty/leaves', icon: Calendar, label: 'Leave' },
             { to: '/faculty-profile', icon: User, label: 'Profile' }
           ]} 
         />

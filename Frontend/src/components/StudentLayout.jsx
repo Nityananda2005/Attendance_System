@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { Bell, Sun, Moon, MapPin, LayoutDashboard, QrCode, Clock, User, Trophy } from 'lucide-react';
+import { Bell, Sun, Moon, MapPin, LayoutDashboard, QrCode, Clock, User, Trophy, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../api/axios';
 import { getCurrentCoordinates, getGeolocationErrorMessage } from '../utils/geolocation';
@@ -17,7 +17,7 @@ import { getCurrentCoordinates, getGeolocationErrorMessage } from '../utils/geol
  *   </StudentLayout>
  */
 const StudentLayout = ({ children, title }) => {
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -158,6 +158,53 @@ const StudentLayout = ({ children, title }) => {
         } else if (data.type === 'SESSION_ENDED') {
           // Remove the session from notifications
           setNotifications(prev => prev.filter(n => n.sessionCode !== data.sessionCode));
+        } else if (data.type === 'PROFILE_REJECTED') {
+          toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-sm w-full bg-white dark:bg-slate-800 shadow-2xl rounded-2xl pointer-events-auto flex flex-col overflow-hidden border-2 border-rose-500 p-5 mt-2`}>
+              <div className="flex items-start">
+                <div className="flex-shrink-0 pt-1">
+                  <div className="w-[42px] h-[42px] rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center border border-rose-200 dark:border-rose-500/30">
+                    <X className="w-5 h-5 text-rose-600 dark:text-rose-400" strokeWidth={3} />
+                  </div>
+                </div>
+                <div className="ml-3.5 flex-1">
+                  <p className="text-[17px] font-black text-gray-900 dark:text-white tracking-tight leading-tight">Profile Rejected</p>
+                  <p className="mt-1 text-[13px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed">{data.message}</p>
+                </div>
+              </div>
+              <div className="mt-5 flex gap-2">
+                <button 
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    navigate('/profile');
+                  }}
+                  className="flex-[2] bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-extrabold py-3 px-4 rounded-xl text-[13px] transition-all shadow-md shadow-rose-500/30">
+                  Review & Fix Profile
+                </button>
+                <button 
+                  onClick={() => toast.dismiss(t.id)}
+                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-700/50 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-[13px] font-bold transition-all">
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ), { duration: 10000, position: 'top-center' });
+        } else if (data.type === 'PROFILE_APPROVED') {
+            toast.success("Profile Approved! Refreshing access...", { duration: 3000 });
+            
+            // Sync local state immediately
+            const syncProfile = async () => {
+                try {
+                    const res = await api.get('/auth/profile');
+                    updateUser(res.data);
+                    toast.success("Access Granted. Redirecting to Dashboard...", { icon: '🚀' });
+                    setTimeout(() => navigate('/dashboard'), 1500);
+                } catch (err) {
+                    console.error("Failed to sync approved profile", err);
+                    window.location.reload(); // Fallback
+                }
+            };
+            syncProfile();
         }
       } catch (err) {
         console.error("SSE parse error", err);
@@ -203,6 +250,12 @@ const StudentLayout = ({ children, title }) => {
 
       {/* Right side */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
+        {user?.role === 'student' && user?.approvalStatus === 'rejected' && (
+          <div className="w-full bg-red-600 px-4 py-1.5 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-500 z-50 shrink-0">
+            <X className="w-3.5 h-3.5 text-white ring-1 ring-white/30 rounded-full bg-red-500" strokeWidth={3} />
+            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Application Rejected - Profile Access Only</span>
+          </div>
+        )}
 
         {/* Navbar */}
         <header className="h-[60px] lg:h-[70px] bg-white dark:bg-slate-900 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 shrink-0 z-10 transition-colors duration-300">

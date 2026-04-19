@@ -13,7 +13,9 @@ import {
   updateStudent,
   deleteUser,
   deleteAllTeachers,
-  deleteAllStudents
+  deleteAllStudents,
+  updateStudentStatus,
+  approveAllStudents
 } from "../controllers/adminController.js";
 
 
@@ -35,6 +37,8 @@ router.put("/students/:id", protect, adminOnly, updateStudent);
 router.delete("/users/:id", protect, adminOnly, deleteUser);
 router.delete("/teachers/bulk/all", protect, adminOnly, deleteAllTeachers);
 router.delete("/students/bulk/all", protect, adminOnly, deleteAllStudents);
+router.put("/students/:id/status", protect, adminOnly, updateStudentStatus);
+router.put("/students/bulk/approve-all", protect, adminOnly, approveAllStudents);
 
 
 

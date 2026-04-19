@@ -47,13 +47,24 @@ const Teachers = () => {
     name: '',
     email: '',
     password: '',
-    program: '',
+    program: [], // Changed to array for multi-selection
     department: [] 
   });
 
 
   const togglePasswordVisibility = (id) => {
     setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleProgramToggle = (prog) => {
+    setFormData(prev => {
+      const currentProgs = Array.isArray(prev.program) ? prev.program : [];
+      if (currentProgs.includes(prog)) {
+        return { ...prev, program: currentProgs.filter(p => p !== prog) };
+      } else {
+        return { ...prev, program: [...currentProgs, prog] };
+      }
+    });
   };
 
   const handleDeptToggle = (dept) => {
@@ -113,7 +124,7 @@ const Teachers = () => {
       }
       setShowModal(false);
       setEditingTeacher(null);
-      setFormData({ name: '', email: '', password: '', program: '', department: [] });
+      setFormData({ name: '', email: '', password: '', program: [], department: [] });
       fetchTeachers();
 
     } catch (err) {
@@ -168,12 +179,13 @@ const Teachers = () => {
       }
 
       // 1. Define CSV headers
-      const headers = ["Name", "Email", "Department(s)", "Join Date", "Status", "Raw Password"];
+      const headers = ["Name", "Email", "Program(s)", "Department(s)", "Join Date", "Status", "Raw Password"];
       
       // 2. Format rows
       const rows = allTeachers.map(t => [
         `"${t.name}"`,
         `"${t.email}"`,
+        `"${(Array.isArray(t.program) ? t.program.join('; ') : (t.program || 'N/A'))}"`,
         `"${(Array.isArray(t.department) ? t.department.join('; ') : (t.department || 'N/A'))}"`,
         `"${new Date(t.createdAt).toLocaleDateString()}"`,
         '"Active"',
@@ -245,7 +257,7 @@ const Teachers = () => {
             <button 
               onClick={() => {
                 setEditingTeacher(null);
-                setFormData({ name: '', email: '', password: '', program: '', department: [] });
+                setFormData({ name: '', email: '', password: '', program: [], department: [] });
                 setShowModal(true);
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all"
@@ -331,9 +343,19 @@ const Teachers = () => {
                         <p className="text-sm text-gray-600 dark:text-slate-400">{teacher.email}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold ring-1 ring-blue-100 dark:ring-blue-800">
-                          {teacher.program || 'N/A'}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {Array.isArray(teacher.program) ? (
+                            teacher.program.map((p, idx) => (
+                              <span key={idx} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-[9px] font-bold ring-1 ring-blue-100 dark:ring-blue-800">
+                                {p}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold ring-1 ring-blue-100 dark:ring-blue-800">
+                              {teacher.program || 'N/A'}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1.5 max-w-[200px]">
@@ -380,7 +402,7 @@ const Teachers = () => {
                               setFormData({
                                 name: teacher.name,
                                 email: teacher.email,
-                                program: teacher.program || '',
+                                program: Array.isArray(teacher.program) ? teacher.program : (teacher.program ? [teacher.program] : []),
                                 department: Array.isArray(teacher.department) ? teacher.department : [teacher.department],
                                 password: ''
                               });
@@ -542,27 +564,40 @@ const Teachers = () => {
 
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <label className="w-1/3 text-sm font-bold text-gray-700 dark:text-slate-300">Program</label>
-                <select 
-                  required
-                  className="w-2/3 px-4 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-white"
-                  value={formData.program}
-                  onChange={(e) => setFormData({...formData, program: e.target.value, department: []})}
-                >
-                  <option value="">Select Program...</option>
-                  {PROGRAMS.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-gray-700 dark:text-slate-300">Assign Program(s)</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 bg-gray-50/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800">
+                  {PROGRAMS.map((p) => (
+                    <label key={p} className="flex items-center gap-2.5 cursor-pointer group">
+                      <div className="relative flex items-center">
+                        <input 
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={formData.program?.includes(p)}
+                          onChange={() => handleProgramToggle(p)}
+                        />
+                        <div className="w-4.5 h-4.5 border-2 border-gray-300 dark:border-slate-700 rounded peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                          <CheckCircle className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                        </div>
+                      </div>
+                      <span className="text-[12px] font-bold text-gray-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {p}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-700 dark:text-slate-300">Assign Branches {formData.program ? `(${formData.program})` : ''}</label>
+                <label className="text-sm font-bold text-gray-700 dark:text-slate-300">
+                  Assign Branches {formData.program?.length > 0 ? `(${formData.program.join(', ')})` : ''}
+                </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50/50 dark:bg-slate-900/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800">
-                  {!formData.program ? (
-                    <p className="col-span-2 text-xs text-gray-400 italic py-2">Please select a program first to see branches.</p>
+                  {(!formData.program || formData.program.length === 0) ? (
+                    <p className="col-span-2 text-xs text-gray-400 italic py-2">Please select at least one program first to see branches.</p>
                   ) : (
-                    (ACADEMIC_STRUCTURE[formData.program] || []).map((branch) => (
-                      <label key={branch} className="flex items-center gap-3 cursor-pointer group">
+                    formData.program.flatMap(p => ACADEMIC_STRUCTURE[p] || []).map((branch, idx) => (
+                      <label key={`${branch}-${idx}`} className="flex items-center gap-3 cursor-pointer group">
                         <div className="relative flex items-center">
                           <input 
                             type="checkbox"

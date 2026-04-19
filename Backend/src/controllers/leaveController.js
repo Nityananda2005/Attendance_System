@@ -102,3 +102,65 @@ export const updateLeaveStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+/**
+ * @desc    Delete a leave request (Faculty can only delete pending, Admin can delete any)
+ * @route   DELETE /api/leaves/:id
+ * @access  Private
+ */
+export const deleteLeave = async (req, res) => {
+  try {
+    const leave = await Leave.findById(req.params.id);
+
+    if (!leave) {
+      return res.status(404).json({ message: "Leave record not found" });
+    }
+
+    // Authorization: Must be owner OR admin
+    const isOwner = leave.facultyId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "You are not authorized to delete this record" });
+    }
+
+    // Faculty can only delete if it's still pending
+    if (!isAdmin && leave.status !== 'pending') {
+      return res.status(400).json({ message: "Processed leaves cannot be deleted by faculty" });
+    }
+
+    await leave.deleteOne();
+
+    res.json({ message: "Leave record deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Delete all my leaves (Faculty)
+ * @route   DELETE /api/leaves/my/all
+ * @access  Private
+ */
+export const deleteAllMyLeaves = async (req, res) => {
+  try {
+    const result = await Leave.deleteMany({ facultyId: req.user._id, status: 'pending' });
+    res.json({ message: `Successfully cancelled ${result.deletedCount} pending leave requests.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Delete all leaves (Admin)
+ * @route   DELETE /api/leaves/manage/all
+ * @access  Private/Admin
+ */
+export const deleteAllLeaves = async (req, res) => {
+  try {
+    const result = await Leave.deleteMany({});
+    res.json({ message: `Successfully cleared ${result.deletedCount} leave records from database.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

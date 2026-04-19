@@ -19,7 +19,10 @@ import {
   MapPin,
   TrendingUp,
   X,
-  Lock
+  Lock,
+  CheckCircle2,
+  XCircle,
+  Clock
 } from 'lucide-react';
 
 
@@ -44,6 +47,7 @@ const Students = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [limit] = useState(10);
   const [exporting, setExporting] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -96,6 +100,7 @@ const Students = () => {
       setStudents(res.data.students);
       setTotalPages(res.data.totalPages);
       setTotalCount(res.data.totalStudents);
+      setPendingCount(res.data.pendingCount || 0);
     } catch (err) {
       toast.error("Failed to load students");
     } finally {
@@ -103,11 +108,23 @@ const Students = () => {
     }
   };
 
+  // Real-time update listener
+  useEffect(() => {
+    const handleRefresh = () => {
+      console.log("[Real-time] Refreshing student list...");
+      fetchStudents();
+    };
+
+    window.addEventListener('REFRESH_STUDENTS_LIST', handleRefresh);
+    return () => window.removeEventListener('REFRESH_STUDENTS_LIST', handleRefresh);
+  }, [activeBranch, activeProgram, searchQuery]); // Re-bind if filters change
+
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this student profile?")) {
       try {
         await api.delete(`/admin/users/${id}`);
         toast.success("Student deleted successfully");
+        // Re-fetch the list to show updated data
         fetchStudents();
       } catch (err) {
         toast.error("Failed to delete student");
@@ -123,6 +140,7 @@ const Students = () => {
           await api.delete('/admin/students/bulk/all');
           toast.success("All student data purged successfully");
           setCurrentPage(1);
+          // Reliably fetch the fresh (empty) student list
           fetchStudents();
         } catch (err) {
           toast.error("Bulk deletion failed");
@@ -130,6 +148,31 @@ const Students = () => {
           setLoading(false);
         }
       }
+    }
+  };
+
+  const handleApproveAll = async () => {
+    if (window.confirm("Are you sure you want to approve all pending students?")) {
+      try {
+        setLoading(true);
+        const res = await api.put('/admin/students/bulk/approve-all');
+        toast.success(res.data.message || "All pending students approved");
+        fetchStudents();
+      } catch (err) {
+        toast.error("Bulk approval failed");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      await api.put(`/admin/students/${id}/status`, { status });
+      toast.success(`Student ${status === 'approved' ? 'approved' : 'rejected'}`);
+      fetchStudents();
+    } catch (err) {
+      toast.error("Failed to update status");
     }
   };
 
@@ -145,7 +188,7 @@ const Students = () => {
         return;
       }
 
-      const headers = ["Name", "Enrollment ID", "Email", "Program", "Branch", "Mobile", "Semester", "Account Created"];
+      const headers = ["Name", "Enrollment ID", "Email", "Program", "Branch", "Mobile", "Semester", "Additional Courses", "Account Created"];
       const rows = allData.map(s => [
         `"${s.name}"`,
         `"${s.enrollmentId || 'N/A'}"`,
@@ -154,6 +197,7 @@ const Students = () => {
         `"${s.branch || s.department || 'N/A'}"`,
         `"${s.phone || 'N/A'}"`,
         `"${s.semester || 'N/A'}"`,
+        `"${(Array.isArray(s.additionalCourses) && s.additionalCourses.length > 0) ? s.additionalCourses.join('; ') : 'NA'}"`,
         `"${new Date(s.createdAt).toLocaleDateString()}"`
       ]);
 
@@ -193,6 +237,19 @@ const Students = () => {
             >
               <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
               Delete All
+            </button>
+
+            <button 
+              onClick={handleApproveAll}
+              className="relative flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all group"
+            >
+              <UserCheck className="w-4 h-4" />
+              Approve All
+              {pendingCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-900 animate-bounce shadow-lg">
+                  {pendingCount}
+                </span>
+              )}
             </button>
 
             <button className="flex items-center gap-2 px-4 py-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-sm font-bold border border-blue-100 dark:border-blue-800 hover:bg-blue-100 transition-all">
@@ -289,6 +346,8 @@ const Students = () => {
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Branch</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mobile Number</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Semester</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Additnl. Courses</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Password</th>
                   <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Actions</th>
                 </tr>
@@ -337,6 +396,58 @@ const Students = () => {
                         <div className="flex flex-col gap-1">
                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{formatSemester(student.semester)}</span>
                            <span className="text-[10px] text-gray-400 font-medium italic">Batch: {student.batchSection || 'A'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1 max-w-[120px]">
+                          {Array.isArray(student.additionalCourses) && student.additionalCourses.length > 0 ? (
+                            student.additionalCourses.map((course, idx) => (
+                              <span 
+                                key={idx} 
+                                className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-bold border border-emerald-100 dark:border-emerald-500/20 shadow-sm"
+                              >
+                                {course}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[10px] font-bold text-gray-400 italic">NA</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col items-center gap-2">
+                           {student.approvalStatus === 'approved' ? (
+                              <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
+                                <CheckCircle2 className="w-3 h-3" /> Approved
+                              </span>
+                           ) : student.approvalStatus === 'rejected' ? (
+                              <span className="px-2.5 py-1 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border border-rose-100 dark:border-rose-500/20 shadow-sm">
+                                <XCircle className="w-3 h-3" /> Rejected
+                              </span>
+                           ) : (
+                              <span className="px-2.5 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border border-amber-100 dark:border-amber-500/20 shadow-sm animate-pulse">
+                                <Clock className="w-3 h-3" /> Pending
+                              </span>
+                           )}
+                           
+                           {student.approvalStatus !== 'approved' && (
+                             <div className="flex items-center gap-1.5 mt-1 backdrop-blur-sm p-1 rounded-lg bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700">
+                               <button 
+                                 onClick={() => handleStatusUpdate(student._id, 'approved')}
+                                 title="Approve Student"
+                                 className="p-1 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded transition-colors"
+                               >
+                                 <CheckCircle2 className="w-4 h-4" strokeWidth={2.5} />
+                               </button>
+                               <button 
+                                 onClick={() => handleStatusUpdate(student._id, 'rejected')}
+                                 title="Reject Student"
+                                 className="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
+                               >
+                                 <XCircle className="w-4 h-4" strokeWidth={2.5} />
+                               </button>
+                             </div>
+                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">

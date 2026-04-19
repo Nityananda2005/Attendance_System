@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Session from "../models/Session.js";
 import Attendance from "../models/Attendance.js";
+import { sendIndividualNotification } from "../utils/sseProvider.js";
 import bcrypt from "bcryptjs";
 
 /**
@@ -382,8 +383,18 @@ export const getStudents = async (req, res) => {
       ]);
     }
 
+    // Filter: Only show students with 100% complete profiles
+    query.enrollmentId = { $exists: true, $ne: "" };
+    query.program = { $exists: true, $ne: "" };
+    query.branch = { $exists: true, $ne: "" };
+    query.semester = { $exists: true, $ne: null };
+    query.batchSection = { $exists: true, $ne: "" };
+    query.residence = { $exists: true, $ne: "" };
+    query.phone = { $exists: true, $ne: "" };
+
 
     const totalStudents = await User.countDocuments(query);
+    const pendingCount = await User.countDocuments({ ...query, approvalStatus: 'pending' });
     const students = await User.find(query)
       .select("-password")
       .sort({ createdAt: -1 })
@@ -393,6 +404,7 @@ export const getStudents = async (req, res) => {
     res.json({
       students,
       totalStudents,
+      pendingCount,
       totalPages: limit === 0 ? 1 : Math.ceil(totalStudents / limit),
       currentPage: page
     });
@@ -526,3 +538,87 @@ export const deleteAllStudents = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Update a student's approval status
+ * @route   PUT /api/admin/students/:id/status
+ * @access  Private/Admin
+ */
+export const updateStudentStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const studentId = req.params.id;
+
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const student = await User.findById(studentId);
+    if (!student || student.role !== 'student') {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    student.approvalStatus = status;
+    await student.save();
+
+    // Notify student if rejected
+    if (status === 'rejected') {
+      sendIndividualNotification(studentId, {
+        type: 'PROFILE_REJECTED',
+        message: 'Your profile application has been rejected. Please review and update your information.',
+      });
+    }
+
+    res.json({
+      message: `Student account ${status} successfully`,
+      student: {
+        _id: student._id,
+        name: student.name,
+        approvalStatus: student.approvalStatus
+      }
+    });
+
+    // Notify student if approved (Real-time access sync)
+    if (status === 'approved') {
+      sendIndividualNotification(studentId, {
+        type: 'PROFILE_APPROVED',
+        message: 'Congratulations! Your profile has been approved. You now have full access to the dashboard.',
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Approve all pending students
+ * @route   PUT /api/admin/students/bulk/approve-all
+ * @access  Private/Admin
+ */
+export const approveAllStudents = async (req, res) => {
+  try {
+    // 1. Get IDs of all pending students BEFORE updating
+    const pendingStudents = await User.find({ role: 'student', approvalStatus: 'pending' }).select('_id');
+    const studentIds = pendingStudents.map(s => s._id);
+
+    // 2. Perform bulk update
+    const result = await User.updateMany(
+      { role: 'student', approvalStatus: 'pending' },
+      { $set: { approvalStatus: 'approved' } }
+    );
+
+    res.json({
+      message: `${result.modifiedCount} pending student accounts approved successfully`,
+      count: result.modifiedCount
+    });
+
+    // 3. Notify all approved students
+    studentIds.forEach(id => {
+      sendIndividualNotification(id, {
+        type: 'PROFILE_APPROVED',
+        message: 'Great news! Your profile has been approved by the admin. Refreshing your dashboard access now.',
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

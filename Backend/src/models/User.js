@@ -31,14 +31,17 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     department: { type: [String], default: [] },
-    program: { type: String }, // e.g., B.Tech, MCA, MBA
+    program: { type: [String], default: [] }, // e.g., B.Tech, MCA, MBA
     branch: { type: String },  // e.g., CSE, IT, HR...
     
     batchSection: { type: String },
+    batch: { type: String },
     semester: { type: mongoose.Schema.Types.Mixed }, // Can be Number or String for backward compatibility
     residence: { type: String },
     phone: { type: String },
     emergencyContact: { type: String },
+    additionalCourses: { type: [String], default: [] },
+    approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
   },
   { timestamps: true }
 );

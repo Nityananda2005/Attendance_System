@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { sendRoleNotification } from "../utils/sseProvider.js";
 
 // Generate JWT
 const generateToken = (id) => {
@@ -10,7 +11,7 @@ const generateToken = (id) => {
 };
 
 export const registerUser = async (req, res) => {
-  const { name, email, password, role, enrollmentId, program, branch, semester } = req.body;
+  const { name, email, password, role, enrollmentId, program, branch, semester, additionalCourses } = req.body;
 
   try {
     if (!name || !email || !password) {
@@ -45,7 +46,9 @@ export const registerUser = async (req, res) => {
       department: branch ? [branch] : [], // For backward compatibility
       program,
       branch,
-      semester
+      semester,
+      additionalCourses: additionalCourses || [],
+      approvalStatus: 'pending' // New students start as pending
     });
 
     if (user) {
@@ -63,6 +66,8 @@ export const registerUser = async (req, res) => {
         residence: user.residence,
         phone: user.phone,
         emergencyContact: user.emergencyContact,
+        additionalCourses: user.additionalCourses,
+        approvalStatus: user.approvalStatus,
         token: generateToken(user._id),
       });
     } else {
@@ -98,6 +103,8 @@ export const loginUser = async (req, res) => {
         residence: user.residence,
         phone: user.phone,
         emergencyContact: user.emergencyContact,
+        additionalCourses: user.additionalCourses,
+        approvalStatus: user.approvalStatus,
         token: generateToken(user._id),
       });
     } else {
@@ -122,7 +129,7 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { department, program, branch, batchSection, semester, residence, phone, emergencyContact, name, enrollmentId } = req.body;
+    const { department, program, branch, batchSection, batch, semester, residence, phone, emergencyContact, name, enrollmentId, additionalCourses } = req.body;
     
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -139,13 +146,34 @@ export const updateProfile = async (req, res) => {
       user.department = [branch];
     }
     if (batchSection !== undefined) user.batchSection = batchSection;
+    if (batch !== undefined) user.batch = batch;
     if (semester !== undefined) user.semester = semester;
     if (residence !== undefined) user.residence = residence;
     if (phone !== undefined) user.phone = phone;
     if (emergencyContact !== undefined) user.emergencyContact = emergencyContact;
+    if (additionalCourses !== undefined) user.additionalCourses = additionalCourses;
 
+    // Reset status to pending if it was rejected (allows resubmission)
+    if (user.role === 'student' && user.approvalStatus === 'rejected') {
+      user.approvalStatus = 'pending';
+    }
 
     const updatedUser = await user.save();
+
+    // Trigger Real-time update for Admin if student profile is complete
+    if (updatedUser.role === 'student') {
+      const requiredFields = ['enrollmentId', 'program', 'branch', 'semester', 'batchSection', 'residence', 'phone'];
+      const isComplete = requiredFields.every(f => updatedUser[f] && updatedUser[f].toString().trim() !== '');
+      
+      if (isComplete) {
+        sendRoleNotification('admin', {
+          type: 'STUDENT_PROFILE_UPDATED',
+          message: `${updatedUser.name} has updated their profile and is waiting for approval.`,
+          studentId: updatedUser._id,
+          studentName: updatedUser.name
+        });
+      }
+    }
 
     res.json({
       _id: updatedUser._id,
@@ -161,6 +189,8 @@ export const updateProfile = async (req, res) => {
       residence: updatedUser.residence,
       phone: updatedUser.phone,
       emergencyContact: updatedUser.emergencyContact,
+      additionalCourses: updatedUser.additionalCourses,
+      approvalStatus: updatedUser.approvalStatus,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

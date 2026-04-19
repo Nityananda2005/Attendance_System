@@ -8,6 +8,7 @@ import {
   BookOpen, Book, QrCode, History, User, MoreVertical, MapPin, Flame, GraduationCap
 } from 'lucide-react';
 import { formatSemester } from '../../constants/academicConstants';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useContext(AuthContext);
@@ -63,6 +64,31 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, [user, authLoading, navigate]);
+
+  // Approval Notification logic
+  useEffect(() => {
+    if (user?.role === 'student' && user?.approvalStatus === 'approved') {
+      const storageKey = `notified_approval_${user._id}`;
+      const alreadyNotified = localStorage.getItem(storageKey);
+      
+      if (!alreadyNotified) {
+        toast.success("Verification Success! You are now eligible for Attendance.", {
+          duration: 6000,
+          icon: '✅',
+          style: {
+            borderRadius: '16px',
+            background: '#10b981',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            padding: '16px'
+          },
+          id: 'approval-eligible-notif'
+        });
+        localStorage.setItem(storageKey, 'true');
+      }
+    }
+  }, [user]);
 
   const overallRate = analytics?.overallAttendanceRate || 0;
   const presentLogs = analytics?.totalPresentDays || 0;

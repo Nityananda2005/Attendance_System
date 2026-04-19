@@ -14,10 +14,14 @@ export const ACADEMIC_STRUCTURE = {
     'HR',
     'Finance',
     'Marketing'
+  ],
+  'Common': [
+    'AI / ML Workshop',
+    'Soft Skill'
   ]
 };
 
-export const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
+export const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8, 'Batch A', 'Batch B'];
 
 export const formatSemester = (sem) => {
   if (!sem) return 'N/A';

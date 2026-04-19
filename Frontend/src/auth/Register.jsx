@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { toast } from 'react-hot-toast';
-import { ACADEMIC_STRUCTURE, SEMESTERS } from '../constants/academicConstants';
+import { ACADEMIC_STRUCTURE, SEMESTERS, formatSemester } from '../constants/academicConstants';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -39,7 +39,7 @@ const Register = () => {
           enrollmentId: `STU-${Math.random().toString(36).substring(7).toUpperCase()}`,
           program,
           branch,
-          semester: Number(semester),
+          semester: isNaN(semester) ? semester : Number(semester),
         }),
       });
       if (userData.role === 'faculty') {
@@ -215,7 +215,7 @@ const Register = () => {
                         onBlur={inputBlur}
                       >
                         <option value="">Select Program...</option>
-                        {Object.keys(ACADEMIC_STRUCTURE).map(p => <option key={p} value={p}>{p}</option>)}
+                        {Object.keys(ACADEMIC_STRUCTURE).filter(p => p !== 'Common').map(p => <option key={p} value={p}>{p}</option>)}
                       </select>
                     </div>
                   </div>
@@ -256,7 +256,10 @@ const Register = () => {
                         onBlur={inputBlur}
                       >
                         <option value="">Select Semester...</option>
-                        {SEMESTERS.map(s => <option key={s} value={s}>{s === 1 ? '1st' : s === 2 ? '2nd' : s === 3 ? '3rd' : `${s}th`} Semester</option>)}
+                        {SEMESTERS.filter(s => {
+                          if (role === 'student') return typeof s === 'number';
+                          return true;
+                        }).map(s => <option key={s} value={s}>{formatSemester(s)}</option>)}
                       </select>
                     </div>
                   </div>

@@ -23,4 +23,24 @@ api.interceptors.request.use(
   }
 );
 
+// Add a response interceptor to handle 401 (Unauthorized) errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Skip automatic logout/redirect if the 401 occurs during a login attempt
+      // This allows the login page to show "Invalid Credentials" instead of jumping to the splash page
+      if (error.config && error.config.url && error.config.url.includes('/auth/login')) {
+        return Promise.reject(error);
+      }
+
+      // Auto logout if unauthorized (e.g. account deleted or token expired)
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

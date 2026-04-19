@@ -14,7 +14,8 @@ import {
   User as UserIcon,
   Check,
   X,
-  Send
+  Send,
+  Trash2
 } from 'lucide-react';
 
 const AdminLeaves = () => {
@@ -53,12 +54,38 @@ const AdminLeaves = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to PERMANENTLY delete this leave record?")) return;
+    
+    try {
+      await api.delete(`/leaves/${id}`);
+      toast.success("Leave record deleted");
+      fetchLeaves();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete record");
+    }
+  };
+
   const filteredLeaves = leaves.filter(l => {
     const matchesFilter = filter === 'all' || l.status === filter;
     const matchesSearch = l.facultyId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           l.type.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm("⚠️ CRITICAL ACTION ⚠️\nYou are about to permanently delete ALL leave records in the system. This cannot be undone.\n\nContinue?")) {
+      if (!window.confirm("FINAL WARNING: Are you absolutely sure?")) return;
+    }
+    
+    try {
+      const res = await api.delete('/leaves/manage/all');
+      toast.success(res.data.message);
+      fetchLeaves();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Bulk deletion failed");
+    }
+  };
 
   return (
     <AdminLayout>
@@ -71,6 +98,14 @@ const AdminLeaves = () => {
             <p className="text-sm font-medium text-gray-500 dark:text-slate-400 mt-1">Manage and approve faculty leave applications.</p>
           </div>
           <div className="flex items-center gap-3">
+             <button 
+              onClick={handleDeleteAll}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/30 rounded-xl text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all shadow-sm group"
+             >
+               <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+               Delete All
+             </button>
+
              <div className="p-1 bg-gray-100 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 flex gap-1">
                {['pending', 'approved', 'rejected', 'all'].map(f => (
                  <button 
@@ -164,11 +199,11 @@ const AdminLeaves = () => {
                            </div>
                          ) : l.status === 'approved' ? (
                             <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs ring-1 ring-emerald-100 dark:ring-emerald-900/30 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/10 w-fit">
-                              <CheckCircle className="w-3 h-3" /> Approved
+                               <CheckCircle className="w-3 h-3" /> Approved
                             </div>
                          ) : (
                             <div className="flex items-center gap-1.5 text-rose-600 font-bold text-xs ring-1 ring-rose-100 dark:ring-rose-900/30 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-900/10 w-fit">
-                              <XCircle className="w-3 h-3" /> Rejected
+                               <XCircle className="w-3 h-3" /> Rejected
                             </div>
                          )}
                       </td>
@@ -181,14 +216,30 @@ const AdminLeaves = () => {
                               >
                                 Review & Action
                               </button>
+                              <button 
+                                onClick={() => handleDelete(l._id)}
+                                className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors group"
+                                title="Delete Request"
+                              >
+                                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              </button>
                            </div>
                          ) : (
-                           <button 
-                            disabled
-                            className="text-[11px] font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg opacity-50"
-                           >
-                             Case Closed
-                           </button>
+                           <div className="flex items-center justify-end gap-2">
+                               <button 
+                                disabled
+                                className="text-[11px] font-bold text-gray-400 bg-gray-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg opacity-50"
+                               >
+                                 Case Closed
+                               </button>
+                               <button 
+                                 onClick={() => handleDelete(l._id)}
+                                 className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors group"
+                                 title="Delete Record"
+                               >
+                                 <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                               </button>
+                            </div>
                          )}
                       </td>
                     </tr>

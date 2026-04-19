@@ -109,6 +109,15 @@ const AdminLayout = ({ children }) => {
           
           setNotifications(prev => [data, ...prev]);
         }
+
+        if (data.type === 'STUDENT_PROFILE_UPDATED') {
+          toast.success(`${data.studentName} has completed their profile and is waiting for approval.`, {
+            duration: 5000,
+            icon: '🆕'
+          });
+          // Dispatch custom event to notify student management page to refresh
+          window.dispatchEvent(new CustomEvent('REFRESH_STUDENTS_LIST'));
+        }
       } catch (err) {
         console.error("SSE parse error", err);
       }
@@ -252,6 +261,7 @@ const AdminLayout = ({ children }) => {
         links={[
           { to: '/admin-dashboard', icon: LayoutDashboard, label: 'Dash' },
           { to: '/admin/teachers', icon: Users, label: 'Teachers' },
+          { to: '/admin/leaves', icon: Calendar, label: 'Leave' },
           { to: '/admin/students', icon: UserRound, label: 'Students' },
           { to: '/admin/profile', icon: UserRound, label: 'Profile' }
         ]} 

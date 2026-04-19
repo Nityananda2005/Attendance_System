@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Plus,
   ArrowRight,
-  Info
+  Info,
+  Trash2
 } from 'lucide-react';
 
 const Leaves = () => {
@@ -60,6 +61,18 @@ const Leaves = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this leave application?")) return;
+    
+    try {
+      await api.delete(`/leaves/${id}`);
+      toast.success("Leave application deleted");
+      fetchMyLeaves();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete leave");
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'approved':
@@ -83,6 +96,18 @@ const Leaves = () => {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (!window.confirm("⚠️ This will cancel ALL your currently PENDING leave requests. Continue?")) return;
+    
+    try {
+      const res = await api.delete('/leaves/my/all');
+      toast.success(res.data.message);
+      fetchMyLeaves();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Bulk deletion failed");
+    }
+  };
+
   return (
     <FacultyLayout>
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
@@ -93,13 +118,22 @@ const Leaves = () => {
             <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Leave Management</h1>
             <p className="text-[14px] text-gray-500 dark:text-slate-400 mt-1 font-medium">Apply for leaves and track your status in real-time.</p>
           </div>
-          <button 
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            Apply New Leave
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleDeleteAll}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/30 rounded-xl text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all shadow-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete All
+            </button>
+            <button 
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              Apply New Leave
+            </button>
+          </div>
         </div>
 
         {/* Stats Section */}
@@ -147,6 +181,7 @@ const Leaves = () => {
                   <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Reason</th>
                   <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Status</th>
                   <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Admin Feedback</th>
+                  <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
@@ -177,6 +212,17 @@ const Leaves = () => {
                           </div>
                         ) : (
                           <span className="text-[11px] text-gray-300 dark:text-slate-600 italic">No feedback yet</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        {l.status === 'pending' && (
+                          <button 
+                            onClick={() => handleDelete(l._id)}
+                            className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors group"
+                            title="Delete Request"
+                          >
+                            <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          </button>
                         )}
                       </td>
                     </tr>

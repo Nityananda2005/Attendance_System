@@ -8,6 +8,7 @@ import {
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
+import { SEMESTERS, formatSemester } from '../../constants/academicConstants';
 
 // Removed hardcoded COLLEGE_LOCATION to support dynamic teacher-based location.
 const DEFAULT_RADIUS_METERS = 200;
@@ -162,8 +163,8 @@ const CreateSession = () => {
                               className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
                             >
                               <option value="">Select Semester...</option>
-                              {['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'].map(sem => (
-                                <option key={sem} value={sem}>{sem}</option>
+                              {SEMESTERS.map(sem => (
+                                <option key={sem} value={sem}>{formatSemester(sem)}</option>
                               ))}
                             </select>
                           </div>

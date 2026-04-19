@@ -16,13 +16,18 @@ const ProtectedRoute = ({ children, allowedRole }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Check for profile completion for Students
+  // Check for profile completion and Approval for Students
   if (user.role === 'student' && location.pathname !== '/profile') {
     const requiredFields = ['department', 'semester', 'batchSection', 'residence', 'phone'];
     const isComplete = requiredFields.every(field => user[field] && user[field].toString().trim() !== '');
     
     if (!isComplete) {
       toast.error("Please complete your profile details first!", { id: 'profile-warning' });
+      return <Navigate to="/profile" replace />;
+    }
+
+    // Check for Approval Status
+    if (user.approvalStatus !== 'approved') {
       return <Navigate to="/profile" replace />;
     }
   }
