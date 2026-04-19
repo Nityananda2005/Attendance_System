@@ -142,9 +142,21 @@ const StudentLayout = ({ children, title }) => {
 
     const baseURL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || 'http://localhost:4000/api';
     const deptParam = Array.isArray(user?.department) ? user.department.join(',') : user?.department || '';
-    const semParam = `${user?.semester || ''},${user?.batch || ''}`;
+    const semParam = user?.semester || '';
     const coursesParam = Array.isArray(user?.additionalCourses) ? user.additionalCourses.join(',') : '';
-    const sse = new EventSource(`${baseURL}/notifications/stream?department=${encodeURIComponent(deptParam)}&semester=${encodeURIComponent(semParam)}&additionalCourses=${encodeURIComponent(coursesParam)}&userId=${user?._id}&role=${user?.role}`);
+    
+    const queryParams = new URLSearchParams({
+      department: deptParam,
+      semester: semParam,
+      additionalCourses: coursesParam,
+      batch: user?.batch || '',
+      branch: user?.branch || '',
+      program: user?.program || '',
+      userId: user?._id || '',
+      role: user?.role || ''
+    });
+
+    const sse = new EventSource(`${baseURL}/notifications/stream?${queryParams.toString()}`);
 
 
     sse.onmessage = (e) => {

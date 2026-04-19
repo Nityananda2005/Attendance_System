@@ -8,7 +8,7 @@ import {
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import { getCurrentCoordinates, getGeolocationErrorMessage } from '../../utils/geolocation';
-import { SEMESTERS, formatSemester, ACADEMIC_STRUCTURE } from '../../constants/academicConstants';
+import { SEMESTERS, formatSemester } from '../../constants/academicConstants';
 
 // Removed hardcoded COLLEGE_LOCATION to support dynamic teacher-based location.
 const DEFAULT_RADIUS_METERS = 200;
@@ -24,7 +24,6 @@ const CreateSession = () => {
   const [semester, setSemester] = useState(user?.semester || '');
   const [enableGeofencing, setEnableGeofencing] = useState(true);
   const [radiusAllowed, setRadiusAllowed] = useState(DEFAULT_RADIUS_METERS);
-  const [sessionType, setSessionType] = useState('regular'); // 'regular' or 'workshop'
   const [isGenerating, setIsGenerating] = useState(false);
   const [sessionCode, setSessionCode] = useState(null);
 
@@ -123,56 +122,19 @@ const CreateSession = () => {
                      </div>
 
                      <div className="space-y-6">
-                        {/* Session Type Picker */}
-                        <div className="flex gap-3 mb-6">
-                           {[
-                             { id: 'regular', label: 'Main Subject' },
-                             { id: 'workshop', label: 'Workshop / Certification' }
-                           ].map(type => (
-                             <button
-                               key={type.id}
-                               type="button"
-                               onClick={() => {
-                                 setSessionType(type.id);
-                                 if (type.id === 'regular') setCourseName('');
-                                 else setCourseName(ACADEMIC_STRUCTURE['Common'][0]);
-                               }}
-                               className={`flex-1 py-3 px-4 rounded-xl text-[12px] font-black uppercase tracking-wider border-2 transition-all ${
-                                 sessionType === type.id 
-                                 ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30' 
-                                 : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:border-blue-100 dark:hover:border-blue-500/20'
-                               }`}
-                             >
-                               {type.label}
-                             </button>
-                           ))}
-                        </div>
-
                         <div>
                           <label className="block text-[13px] font-extrabold text-gray-700 dark:text-slate-300 mb-2">
-                            {sessionType === 'regular' ? 'Subject / Course Name' : 'Select Workshop'}
+                            Subject / Course Name
                           </label>
                           <div className="relative">
                             <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400 dark:text-slate-500" strokeWidth={2.5} />
-                            {sessionType === 'regular' ? (
-                              <input 
-                                type="text" 
-                                value={courseName} 
-                                onChange={e => setCourseName(e.target.value)} 
-                                placeholder="e.g. Advanced Machine Learning" 
-                                className="w-full pl-[46px] pr-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                              />
-                            ) : (
-                              <select
-                                value={courseName}
-                                onChange={e => setCourseName(e.target.value)}
-                                className="w-full pl-[46px] pr-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
-                              >
-                                {ACADEMIC_STRUCTURE['Common'].map(c => (
-                                  <option key={c} value={c}>{c}</option>
-                                ))}
-                              </select>
-                            )}
+                            <input 
+                              type="text" 
+                              value={courseName} 
+                              onChange={e => setCourseName(e.target.value)} 
+                              placeholder="e.g. Advanced Machine Learning" 
+                              className="w-full pl-[46px] pr-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-[13.5px] font-bold text-gray-800 dark:text-slate-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            />
                           </div>
                         </div>
 
@@ -258,8 +220,8 @@ const CreateSession = () => {
                      <Info className="w-5 h-5 text-blue-500 dark:text-blue-400" strokeWidth={2.5}/>
                    </div>
                    <div>
-                     <h4 className="text-[14px] font-black text-[#1e3a8a] dark:text-blue-400 mb-1.5 tracking-tight">Security Protocol Enabled</h4>
-                     <p className="text-[13px] font-semibold text-[#1e3a8a]/70 dark:text-slate-400 leading-relaxed pr-4">Students must be within {radiusAllowed} meters of your current starting location to mark their attendance successfully. These coordinates are frozen once the code is generated.</p>
+                     <h4 className="text-[14px] font-black text-[#1e3a8a] dark:text-blue-400 mb-1.5 tracking-tight">Security Protocol Paused</h4>
+                     <p className="text-[13px] font-semibold text-[#1e3a8a]/70 dark:text-slate-400 leading-relaxed pr-4">Geolocation restrictions are currently bypassed. Students can mark attendance regardless of their physical proximity to your location.</p>
                    </div>
                  </div>
 

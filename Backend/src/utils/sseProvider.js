@@ -8,7 +8,7 @@ let clients = [];
  * @param {Object} res - The response object
  */
 export const addClient = (req, res) => {
-    const { department, semester, userId, role, additionalCourses } = req.query;
+    const { department, semester, userId, role, additionalCourses, batch, branch, program } = req.query;
     
     // Standardize input
     const depts = department ? department.split(',').map(d => d.trim().toLowerCase()) : [];
@@ -20,7 +20,17 @@ export const addClient = (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const client = { res, department: depts, semester: sem, userId, role, additionalCourses: courses };
+    const client = { 
+        res, 
+        department: depts, 
+        semester: sem, 
+        userId, 
+        role, 
+        additionalCourses: courses,
+        batch: batch || '',
+        branch: branch || '',
+        program: program || ''
+    };
     clients.push(client);
 
     req.on('close', () => {

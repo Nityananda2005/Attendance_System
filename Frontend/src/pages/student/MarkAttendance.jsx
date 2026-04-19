@@ -56,19 +56,21 @@ const MarkAttendance = () => {
       const loc = await getCurrentCoordinates();
       
       if (loc.accuracy > 250) {
-        toast.error(`Low GPS accuracy (${Math.round(loc.accuracy)}m). Please try again in an open area.`, { id: 'student-loc' });
-        setIsVerifying(false);
-        return;
+        toast.error(`Low GPS accuracy (${Math.round(loc.accuracy)}m). Please move to an open area.`, { id: 'student-loc' });
+        // In "active" mode, we might want to block low accuracy, 
+        // but keeping it as a warning for now as per previous "proper" loosening for laptops.
+        locationPayload = { lat: loc.lat, lng: loc.lng };
+        accuracyValue = loc.accuracy;
+      } else {
+        locationPayload = { lat: loc.lat, lng: loc.lng };
+        accuracyValue = loc.accuracy;
+        toast.success("Location secured!", { id: 'student-loc' });
       }
-
-      locationPayload = { lat: loc.lat, lng: loc.lng };
-      accuracyValue = loc.accuracy;
-      toast.success("Location secured!", { id: 'student-loc' });
     } catch (err) {
-      const errMsg = getGeolocationErrorMessage(err, "Location access is required to mark attendance.");
+      const errMsg = getGeolocationErrorMessage(err, "Location access is required for attendance.");
       toast.error(errMsg, { id: 'student-loc' });
       setIsVerifying(false);
-      return;
+      return; 
     }
 
     try {
@@ -145,8 +147,8 @@ const MarkAttendance = () => {
             </p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-full text-blue-600 dark:text-blue-400 w-fit text-[11px] font-bold">
-            <Info className="w-3.5 h-3.5 shrink-0" />
-            Verification Active
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+            Location Verified
           </div>
         </div>
 
@@ -232,8 +234,8 @@ const MarkAttendance = () => {
               <div className="space-y-4">
                 {[
                   { icon: CheckCircle2, title: 'Session Verified', desc: 'App handshake with academic server.' },
-                  { icon: Signal, title: 'GPS Verification', desc: 'Strict location bound check enabled.' },
-                  { icon: MapPin, title: 'Geofence Active', desc: 'Checking proximity to teacher location.' },
+                  { icon: Signal, title: 'GPS Verification', desc: 'Secure proximity check active.' },
+                  { icon: MapPin, title: 'Geofence Active', desc: 'Classroom radius enforced.' },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3 group cursor-default">
                     <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 flex items-center justify-center shrink-0 text-gray-400 dark:text-slate-500 group-hover:text-blue-500 dark:text-blue-400 group-hover:border-blue-100 dark:border-blue-500/20 group-hover:bg-blue-50 dark:bg-blue-500/10 transition-all">

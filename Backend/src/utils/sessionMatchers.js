@@ -6,6 +6,12 @@ export const extractAcronym = (str) => {
   return match ? match[1].toLowerCase().trim() : null;
 };
 
+// Normalize strings for fuzzy matching (removes spaces, slashes, and lowercase)
+const normalize = (str) => {
+  if (!str) return '';
+  return str.toString().toLowerCase().replace(/[\/\s\-_]/g, '').trim();
+};
+
 /**
  * Robust check if student matches session branch/semester
  * @param {Object} student - The student user object (requires department and semester)
@@ -15,9 +21,13 @@ export const extractAcronym = (str) => {
 export const isMatchingSession = (student, session) => {
   if (!student || !session) return false;
   
-  // 1. Branch/Department Matching
+  // 1. Unified Enrollment Matching (Departments + Workshops)
   const studentDepts = (Array.isArray(student.department) ? student.department : [student.department || student.branch])
     .filter(Boolean).map(d => d.toString().toLowerCase().trim());
+  
+  const studentAdditional = (Array.isArray(student.additionalCourses) ? student.additionalCourses : [])
+    .filter(Boolean).map(d => d.toString().toLowerCase().trim());
+
   const sessionDepts = (Array.isArray(session.department) ? session.department : [session.department])
     .filter(Boolean).map(d => d.toString().toLowerCase().trim());
 
@@ -27,26 +37,35 @@ export const isMatchingSession = (student, session) => {
   }
 
   const isMatchingBranch = sessionDepts.length === 0 || sessionDepts.some(tDept => {
-    return studentDepts.some(sDept => {
+    const normT = normalize(tDept);
+    
+    // Check against student departments
+    const matchDept = studentDepts.some(sDept => {
       if (!sDept || !tDept) return false;
-      // Direct substring match
-      if (sDept.includes(tDept) || tDept.includes(sDept)) return true;
+      const normS = normalize(sDept);
+      
+      // Direct substring match or normalized match
+      if (sDept.includes(tDept) || tDept.includes(sDept) || normS.includes(normT) || normT.includes(normS)) return true;
+      
       // Acronym match
       const sAcronym = extractAcronym(sDept);
       const tAcronym = extractAcronym(tDept);
       if (sAcronym && tAcronym && sAcronym === tAcronym) return true;
+      
       return false;
     });
-  });
 
-  // 1.5 Additional Course (Workshop) Matching
-  const workshops = ['AI/ML', 'Soft Skill'];
-  const matchedWorkshop = workshops.find(w => session.courseName?.includes(w));
-  
-  if (matchedWorkshop) {
-    const hasEnrolled = (student.additionalCourses || []).some(sCourse => sCourse.includes(matchedWorkshop));
-    if (!hasEnrolled) return false;
-  }
+    if (matchDept) return true;
+
+    // Check against student additional courses (Workshops)
+    const matchWorkshop = studentAdditional.some(sWork => {
+      const normS = normalize(sWork);
+      // More aggressive normalization match for workshops (e.g. "ai / ml workshop" vs "ai/ml")
+      return normS.includes(normT) || normT.includes(normS) || (normT.includes('workshop') && normT.includes(normS));
+    });
+
+    return matchWorkshop;
+  });
 
   // 2. Flexible Semester Match
   const sSemRaw = student.semester;
@@ -60,7 +79,10 @@ export const isMatchingSession = (student, session) => {
 
   const matchesSem = (!isNaN(sSemNum) && !isNaN(tSemNum)) 
     ? sSemNum === tSemNum 
-    : sSemRaw.toString().toLowerCase().trim().includes(tSemRaw.toString().toLowerCase().trim());
+    : (
+        sSemRaw?.toString().toLowerCase().trim().includes(tSemRaw.toString().toLowerCase().trim()) ||
+        student.batch?.toString().toLowerCase().trim().includes(tSemRaw.toString().toLowerCase().trim())
+      );
   
   return isMatchingBranch && matchesSem;
 };

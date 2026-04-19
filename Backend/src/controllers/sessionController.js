@@ -94,7 +94,7 @@ export const getFacultySessions = async (req, res) => {
     if (sessions.length === 0) return res.json([]);
 
     // Fetch all students to calculate total targeted count in JS for consistency
-    const students = await User.find({ role: 'student' }).select('department semester additionalCourses');
+    const students = await User.find({ role: 'student' }).select('department branch semester batch program additionalCourses');
 
     const sessionsWithCounts = sessions.map(session => {
        const targetedStudents = students.filter(student => isMatchingSession(student, session));

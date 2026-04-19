@@ -72,7 +72,7 @@ export const markAttendance = async (req, res) => {
 
 
 
-    // Geolocation verification is now STRICTLY ENABLED
+    // Geolocation verification is ACTIVE
     const geofenceEnabled = true; 
 
     if (geofenceEnabled) {
