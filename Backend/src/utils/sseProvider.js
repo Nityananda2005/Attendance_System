@@ -8,18 +8,19 @@ let clients = [];
  * @param {Object} res - The response object
  */
 export const addClient = (req, res) => {
-    const { department, semester, userId, role } = req.query;
+    const { department, semester, userId, role, additionalCourses } = req.query;
     
     // Standardize input
     const depts = department ? department.split(',').map(d => d.trim().toLowerCase()) : [];
     const sem = semester ? semester.toString().trim().toLowerCase() : '';
+    const courses = additionalCourses ? additionalCourses.split(',').map(c => c.trim()) : [];
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const client = { res, department: depts, semester: sem, userId, role };
+    const client = { res, department: depts, semester: sem, userId, role, additionalCourses: courses };
     clients.push(client);
 
     req.on('close', () => {
