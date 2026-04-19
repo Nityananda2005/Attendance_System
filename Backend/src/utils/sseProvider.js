@@ -8,7 +8,7 @@ let clients = [];
  * @param {Object} res - The response object
  */
 export const addClient = (req, res) => {
-    const { department, semester } = req.query;
+    const { department, semester, userId, role } = req.query;
     
     // Standardize input
     const depts = department ? department.split(',').map(d => d.trim().toLowerCase()) : [];
@@ -19,7 +19,7 @@ export const addClient = (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const client = { res, department: depts, semester: sem };
+    const client = { res, department: depts, semester: sem, userId, role };
     clients.push(client);
 
     req.on('close', () => {
@@ -45,10 +45,33 @@ export const sendNotificationToStudents = (data, targetDepts = [], targetSem = '
         if (shouldSend) {
             console.log(`[SSE] SENDING to client ${index}: Depts=[${client.department}], Sem=${client.semester}`);
             client.res.write(`data: ${JSON.stringify(data)}\n\n`);
-        } else {
-            console.log(`[SSE] FILTERED OUT client ${index}: Depts=[${client.department}], Sem=${client.semester}`);
         }
     });
 };
+
+/**
+ * @desc Send notification to a specific user by ID
+ */
+export const sendIndividualNotification = (userId, data) => {
+    if (!userId) return;
+    clients.forEach(client => {
+        if (client.userId && client.userId === userId.toString()) {
+            client.res.write(`data: ${JSON.stringify(data)}\n\n`);
+        }
+    });
+};
+
+/**
+ * @desc Send notification to all users with a specific role
+ */
+export const sendRoleNotification = (role, data) => {
+    if (!role) return;
+    clients.forEach(client => {
+        if (client.role && client.role === role) {
+            client.res.write(`data: ${JSON.stringify(data)}\n\n`);
+        }
+    });
+};
+
 
 

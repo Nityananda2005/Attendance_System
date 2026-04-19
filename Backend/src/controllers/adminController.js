@@ -265,13 +265,31 @@ export const addTeacher = async (req, res) => {
  */
 export const deleteTeacher = async (req, res) => {
   try {
-    const teacher = await User.findById(req.params.id);
+    const teacherId = req.params.id;
+    const teacher = await User.findById(teacherId);
+    
     if (!teacher || teacher.role !== 'faculty') {
       return res.status(404).json({ message: "Teacher not found" });
     }
 
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: "Teacher account removed permanently" });
+    // 1. Find all sessions associated with this teacher
+    const sessions = await Session.find({ facultyId: teacherId });
+    const sessionIds = sessions.map(s => s._id);
+
+    // 2. Delete all attendance records for those sessions
+    if (sessionIds.length > 0) {
+      await Attendance.deleteMany({ sessionId: { $in: sessionIds } });
+    }
+
+    // 3. Delete all sessions created by this teacher
+    await Session.deleteMany({ facultyId: teacherId });
+
+    // 4. Finally, delete the teacher account
+    await User.findByIdAndDelete(teacherId);
+
+    res.json({ 
+      message: "Teacher account and all associated session history removed permanently" 
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -390,13 +408,33 @@ export const getStudents = async (req, res) => {
  */
 export const deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const userId = req.params.id;
+    const user = await User.findById(userId);
+    
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: "Account removed permanently" });
+    // Perform cascading deletions based on role
+    if (user.role === 'faculty') {
+      // Delete sessions and their attendance
+      const sessions = await Session.find({ facultyId: userId });
+      const sessionIds = sessions.map(s => s._id);
+      
+      if (sessionIds.length > 0) {
+        await Attendance.deleteMany({ sessionId: { $in: sessionIds } });
+      }
+      await Session.deleteMany({ facultyId: userId });
+      
+    } else if (user.role === 'student') {
+      // Delete student's attendance records
+      await Attendance.deleteMany({ studentId: userId });
+    }
+
+    // Finally delete the user
+    await User.findByIdAndDelete(userId);
+    
+    res.json({ message: "Account and associated data removed permanently" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -449,3 +487,42 @@ export const updateStudent = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+/**
+ * @desc    Delete all teachers and their history
+ * @route   DELETE /api/admin/teachers/all
+ * @access  Private/Admin
+ */
+export const deleteAllTeachers = async (req, res) => {
+  try {
+    // 1. Delete all Attendance records
+    await Attendance.deleteMany({});
+    // 2. Delete all Session records
+    await Session.deleteMany({});
+    // 3. Delete all Faculty users
+    await User.deleteMany({ role: "faculty" });
+
+    res.json({ message: "ALL faculty members and session history removed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Delete all students and their attendance history
+ * @route   DELETE /api/admin/students/all
+ * @access  Private/Admin
+ */
+export const deleteAllStudents = async (req, res) => {
+  try {
+    // 1. Delete all Attendance records
+    await Attendance.deleteMany({});
+    // 2. Delete all Student users
+    await User.deleteMany({ role: "student" });
+
+    res.json({ message: "ALL student accounts and attendance records removed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

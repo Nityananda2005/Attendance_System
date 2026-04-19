@@ -4,8 +4,10 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import {
   Activity, LayoutDashboard, PlusCircle, History, LogOut,
-  Bell, Sun, Moon, PlusSquare, List, User
+  Bell, Sun, Moon, PlusSquare, List, User, Calendar, CheckCircle, XCircle
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
 import BottomNav from './BottomNav';
 
 /**
@@ -40,10 +42,94 @@ const FacultyLayout = ({ children }) => {
     { to: '/faculty-dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/create-session', icon: PlusCircle, label: 'Create Session' },
     { to: '/attendance-list', icon: History, label: 'History' },
+    { to: '/faculty/leaves', icon: Calendar, label: 'Leaves' },
   ];
 
-  const isActive = (path) => location.pathname === path;
 
+  const isActive = (path) => location.pathname === path;
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const dropdownRef = React.useRef(null);
+
+  // Fetch initial notifications for faculty
+  useEffect(() => {
+    if (user?.role === 'faculty') {
+      const fetchInitialNotifications = async () => {
+        try {
+          const res = await api.get('/leaves/my');
+          // Show leaves that were updated recently (e.g. not pending)
+          const recentUpdates = res.data
+            .filter(l => l.status !== 'pending')
+            .slice(0, 5) // Last 5 updates
+            .map(l => ({
+              type: 'LEAVE_STATUS_UPDATED',
+              status: l.status,
+              message: `Your leave request for ${new Date(l.startDate).toLocaleDateString()} has been ${l.status}.`,
+              adminComment: l.adminComment
+            }));
+          setNotifications(recentUpdates);
+        } catch (err) {
+          console.error("Failed to fetch faculty notifications");
+        }
+      };
+      fetchInitialNotifications();
+    }
+  }, [user]);
+
+  // Handle outside click for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // SSE Notifications logic
+  useEffect(() => {
+    if (!user) return;
+
+    const baseURL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || 'http://localhost:4000/api';
+    const sse = new EventSource(`${baseURL}/notifications/stream?userId=${user._id}&role=${user.role}`);
+
+    sse.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === 'LEAVE_STATUS_UPDATED') {
+          toast((t) => (
+            <div className="flex items-start gap-3 p-1">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${data.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                {data.status === 'approved' ? <CheckCircle className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">Leave {data.status === 'approved' ? 'Approved' : 'Rejected'}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{data.message}</p>
+                {data.adminComment && (
+                   <p className="text-[11px] font-medium text-blue-500 mt-1 italic">"{data.adminComment}"</p>
+                )}
+              </div>
+            </div>
+          ), { duration: 6000 });
+          
+          setNotifications(prev => [data, ...prev]);
+        }
+      } catch (err) {
+        console.error("SSE parse error", err);
+      }
+    };
+
+    sse.onerror = () => {
+      console.error("SSE connection lost. Reconnecting...");
+    };
+
+    return () => {
+      sse.close();
+    };
+  }, [user]);
+
+  // Right side
   return (
     <div className="flex h-screen bg-[#f8fafc] dark:bg-slate-950 font-sans overflow-hidden relative transition-colors duration-300 mesh-bg">
 
@@ -133,10 +219,62 @@ const FacultyLayout = ({ children }) => {
               {theme === 'dark' ? <Sun className="w-[20px] h-[20px]" strokeWidth={2} /> : <Moon className="w-[20px] h-[20px]" strokeWidth={2} />}
             </button>
 
-            <button className="relative text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
-              <Bell className="w-[20px] h-[20px]" strokeWidth={2} />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 border border-white dark:border-slate-900 rounded-full" />
-            </button>
+            <div className="relative" ref={dropdownRef}>
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors p-2 rounded-full hover:bg-gray-50 dark:hover:bg-slate-800"
+              >
+                <Bell className="w-[20px] h-[20px]" strokeWidth={2} />
+                {notifications.length > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 border border-white dark:border-slate-900 rounded-full animate-pulse" />
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-[300px] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Recent Updates</h3>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-[340px] overflow-y-auto custom-scrollbar pr-1">
+                    {notifications.length > 0 ? notifications.map((n, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => { navigate('/faculty/leaves'); setShowNotifications(false); }}
+                        className="p-3 bg-gray-50/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700/50 border border-transparent hover:border-blue-100 dark:hover:border-blue-500/10 rounded-2xl transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600'}`}>
+                            {n.status === 'approved' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-bold text-gray-800 dark:text-slate-200 leading-tight">{n.message}</p>
+                            {n.adminComment && (
+                              <p className="text-[10px] text-blue-500 mt-1 italic font-medium truncate">"{n.adminComment}"</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="py-10 text-center flex flex-col items-center justify-center h-full opacity-50">
+                         <div className="w-10 h-10 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3">
+                            <Bell className="w-5 h-5 text-gray-300" />
+                         </div>
+                         <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">No new updates</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button 
+                    onClick={() => { navigate('/faculty/leaves'); setShowNotifications(false); }}
+                    className="w-full mt-4 py-3 bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-xl text-[11px] font-bold hover:bg-gray-100 transition-colors"
+                  >
+                    View Leave History
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="hidden sm:block w-px h-7 bg-gray-200 dark:bg-slate-700" />
             <Link to="/faculty-profile" className="flex items-center gap-2.5 cursor-pointer group">
               <div className="hidden sm:flex flex-col items-end">

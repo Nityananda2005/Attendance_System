@@ -134,6 +134,25 @@ const Teachers = () => {
     }
   };
 
+  const handleDeleteAllTeachers = async () => {
+    if (window.confirm("⚠️ CRITICAL ACTION ⚠️\nYou are about to delete ALL teacher accounts and their entire session history. This cannot be undone.\n\nContinue?")) {
+      if (window.confirm("FINAL WARNING: Are you absolutely sure you want to wipe the entire faculty database?")) {
+        try {
+          setLoading(true);
+          await api.delete('/admin/teachers/bulk/all');
+          toast.success("All faculty data purged successfully");
+          setCurrentPage(1);
+          fetchTeachers();
+        } catch (err) {
+          toast.error("Bulk deletion failed");
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+  };
+
+
   const [exporting, setExporting] = useState(false);
 
   const handleExportCSV = async () => {
@@ -216,6 +235,14 @@ const Teachers = () => {
             </button>
 
             <button 
+              onClick={handleDeleteAllTeachers}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/30 rounded-xl text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all shadow-sm group"
+            >
+              <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+              Delete All
+            </button>
+
+            <button 
               onClick={() => {
                 setEditingTeacher(null);
                 setFormData({ name: '', email: '', password: '', program: '', department: [] });
@@ -226,6 +253,7 @@ const Teachers = () => {
               <Plus className="w-4 h-4" />
               Add New Teacher
             </button>
+
 
           </div>
         </div>

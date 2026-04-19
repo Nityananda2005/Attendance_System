@@ -11,7 +11,9 @@ import {
   updateTeacher,
   getStudents,
   updateStudent,
-  deleteUser
+  deleteUser,
+  deleteAllTeachers,
+  deleteAllStudents
 } from "../controllers/adminController.js";
 
 
@@ -31,6 +33,8 @@ router.delete("/teachers/:id", protect, adminOnly, deleteTeacher);
 router.get("/students", protect, adminOnly, getStudents);
 router.put("/students/:id", protect, adminOnly, updateStudent);
 router.delete("/users/:id", protect, adminOnly, deleteUser);
+router.delete("/teachers/bulk/all", protect, adminOnly, deleteAllTeachers);
+router.delete("/students/bulk/all", protect, adminOnly, deleteAllStudents);
 
 
 

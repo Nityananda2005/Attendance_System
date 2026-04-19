@@ -6,6 +6,8 @@ import sessionRoutes from "./routes/sessionRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
+
 
 const app = express();
 
@@ -21,5 +23,7 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/leaves", leaveRoutes);
+
 
 export default app;

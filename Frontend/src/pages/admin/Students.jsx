@@ -115,6 +115,25 @@ const Students = () => {
     }
   };
 
+  const handleDeleteAllStudents = async () => {
+    if (window.confirm("⚠️ CRITICAL ACTION ⚠️\nYou are about to delete ALL student accounts and their attendance records. This cannot be undone.\n\nContinue?")) {
+      if (window.confirm("FINAL WARNING: Are you absolutely sure you want to wipe the entire student database?")) {
+        try {
+          setLoading(true);
+          await api.delete('/admin/students/bulk/all');
+          toast.success("All student data purged successfully");
+          setCurrentPage(1);
+          fetchStudents();
+        } catch (err) {
+          toast.error("Bulk deletion failed");
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+  };
+
+
   const handleExportCSV = async () => {
     try {
       setExporting(true);
@@ -168,10 +187,19 @@ const Students = () => {
             <p className="text-gray-500 dark:text-slate-400 mt-1">View and manage student geofenced attendance records and profiles.</p>
           </div>
           <div className="flex items-center gap-3">
+            <button 
+              onClick={handleDeleteAllStudents}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/30 rounded-xl text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-all shadow-sm group"
+            >
+              <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+              Delete All
+            </button>
+
             <button className="flex items-center gap-2 px-4 py-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-sm font-bold border border-blue-100 dark:border-blue-800 hover:bg-blue-100 transition-all">
               <Upload className="w-4 h-4" />
               Import CSV
             </button>
+
             <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all">
               <Plus className="w-4 h-4" />
               Add Student

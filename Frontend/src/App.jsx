@@ -16,12 +16,16 @@ import FacultyDashboard from './pages/faculty/FacultyDashboard'
 import CreateSession from './pages/faculty/CreateSession'
 import AttendanceList from './pages/faculty/AttendanceList'
 import FacultyProfile from './pages/faculty/FacultyProfile'
+import FacultyLeaves from './pages/faculty/Leaves'
+
 
 import SplashPage from './pages/splaspage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import Teachers from './pages/admin/Teachers'
 import Students from './pages/admin/Students'
 import AdminProfile from './pages/admin/AdminProfile'
+import AdminLeaves from './pages/admin/AdminLeaves'
+
 
 const App = () => {
   return (
@@ -48,6 +52,8 @@ const App = () => {
           <Route path="/create-session" element={<ProtectedRoute allowedRole="faculty"><CreateSession /></ProtectedRoute>} />
           <Route path="/attendance-list" element={<ProtectedRoute allowedRole="faculty"><AttendanceList /></ProtectedRoute>} />
           <Route path="/faculty-profile" element={<ProtectedRoute allowedRole="faculty"><FacultyProfile /></ProtectedRoute>} />
+          <Route path="/faculty/leaves" element={<ProtectedRoute allowedRole="faculty"><FacultyLeaves /></ProtectedRoute>} />
+
 
 
           {/* Admin Protected Routes */}
@@ -55,6 +61,8 @@ const App = () => {
           <Route path="/admin/teachers" element={<ProtectedRoute allowedRole="admin"><Teachers /></ProtectedRoute>} />
           <Route path="/admin/students" element={<ProtectedRoute allowedRole="admin"><Students /></ProtectedRoute>} />
           <Route path="/admin/profile" element={<ProtectedRoute allowedRole="admin"><AdminProfile /></ProtectedRoute>} />
+          <Route path="/admin/leaves" element={<ProtectedRoute allowedRole="admin"><AdminLeaves /></ProtectedRoute>} />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
