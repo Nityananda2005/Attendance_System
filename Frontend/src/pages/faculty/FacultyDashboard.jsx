@@ -160,6 +160,8 @@ const FacultyDashboard = () => {
   const avgAttendance = totalTarget > 0 ? ((totalLogs / totalTarget) * 100).toFixed(1) : "0.0";
   const uniqueCourses = [...new Set(validSessions.map(s => s?.courseId).filter(Boolean))].length;
 
+  const presentStudents = liveStudents.filter(s => s.status === 'Present' || !s.status); // Default to present if status missing for backward compatibility
+
 
   if (loading) {
     return (
@@ -267,7 +269,7 @@ const FacultyDashboard = () => {
                         <p className="text-[11px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Time Elapsed</p>
                       </div>
                       <div className="bg-[#f8fafc] dark:bg-slate-900 border border-gray-100 dark:border-slate-700 rounded-2xl p-7 flex flex-col items-center justify-center text-center">
-                        <h4 className="text-[40px] font-black text-gray-900 dark:text-white tracking-tighter mb-2 leading-none">{liveStudents.length}/{activeSession.totalCount || 0}</h4>
+                        <h4 className="text-[40px] font-black text-gray-900 dark:text-white tracking-tighter mb-2 leading-none">{presentStudents.length}/{activeSession.totalCount || 0}</h4>
                         <p className="text-[11px] font-extrabold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Students Present</p>
                       </div>
                     </div>
@@ -366,7 +368,7 @@ const FacultyDashboard = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {liveStudents.length > 0 ? liveStudents.map(studentLog => (
+                      {presentStudents.length > 0 ? presentStudents.map(studentLog => (
                          <StudentRow 
                            key={studentLog._id}
                            name={studentLog.studentId?.name || "Unknown"} 
