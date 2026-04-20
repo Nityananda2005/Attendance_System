@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const leaveSchema = new mongoose.Schema(
   {
-    facultyId: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,

@@ -68,7 +68,7 @@ const AdminLeaves = () => {
 
   const filteredLeaves = leaves.filter(l => {
     const matchesFilter = filter === 'all' || l.status === filter;
-    const matchesSearch = l.facultyId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = l.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           l.type.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
@@ -155,7 +155,7 @@ const AdminLeaves = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
-                  <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Faculty Member</th>
+                  <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Applicant</th>
                   <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Type & Duration</th>
                   <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Reason</th>
                   <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Status</th>
@@ -170,12 +170,28 @@ const AdminLeaves = () => {
                     <tr key={l._id} className="hover:bg-gray-50/40 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center border border-blue-100 dark:border-blue-800">
-                              <UserIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                             l.userId?.role === 'student' 
+                             ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-100 dark:border-purple-800 text-purple-600 dark:text-purple-400' 
+                             : 'bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-400'
+                           }`}>
+                              <UserIcon className="w-5 h-5" />
                            </div>
                            <div>
-                              <p className="text-[14px] font-black text-gray-900 dark:text-white leading-tight">{l.facultyId?.name}</p>
-                              <p className="text-[11px] font-bold text-gray-400 uppercase mt-0.5 tracking-tight">{l.facultyId?.department?.[0] || 'N/A'}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[14px] font-black text-gray-900 dark:text-white leading-tight">{l.userId?.name}</p>
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
+                                  l.userId?.role === 'student' ? 'bg-purple-100 text-purple-600 shadow-sm' : 'bg-blue-100 text-blue-600 shadow-sm'
+                                }`}>
+                                  {l.userId?.role === 'student' ? 'Student' : 'Teacher'}
+                                </span>
+                              </div>
+                              <p className="text-[11px] font-bold text-gray-400 uppercase mt-0.5 tracking-tight">
+                                {l.userId?.role === 'student' 
+                                  ? `${l.userId?.branch || (Array.isArray(l.userId?.department) ? l.userId?.department[0] : l.userId?.department)} - Sem ${l.userId?.semester}`
+                                  : (Array.isArray(l.userId?.department) ? l.userId?.department[0] : l.userId?.department) || 'N/A'
+                                }
+                              </p>
                            </div>
                         </div>
                       </td>
@@ -264,14 +280,14 @@ const AdminLeaves = () => {
                      </div>
                      <div>
                         <h3 className="text-xl font-black text-gray-900 dark:text-white leading-none">Review Request</h3>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1.5">Employee ID: {selectedLeave.facultyId?._id?.slice(-6)}</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1.5">{selectedLeave.userId?.role === 'student' ? 'Roll No' : 'Employee ID'}: {selectedLeave.userId?._id?.slice(-6)}</p>
                      </div>
                   </div>
                   
                   <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-100 dark:border-slate-700 space-y-3 shadow-inner">
                      <div className="flex justify-between items-center text-sm font-bold">
-                        <span className="text-gray-400">Faculty</span>
-                        <span className="text-blue-600 dark:text-blue-400">{selectedLeave.facultyId?.name}</span>
+                        <span className="text-gray-400">{selectedLeave.userId?.role === 'student' ? 'Student' : 'Faculty'}</span>
+                        <span className="text-blue-600 dark:text-blue-400">{selectedLeave.userId?.name}</span>
                      </div>
                      <div className="flex justify-between items-center text-sm font-bold">
                         <span className="text-gray-400">Type</span>

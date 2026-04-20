@@ -5,8 +5,9 @@ import { AuthContext } from '../../context/AuthContext';
 import FacultyLayout from '../../components/FacultyLayout';
 import { 
   ChevronRight, Eye, CalendarDays, BookOpen, Clock, Users, FileText,
-  Search, Download, Filter, X, Trash2
+  Search, Download, Filter, X, Trash2, FileSpreadsheet
 } from 'lucide-react';
+import ExcelJS from 'exceljs';
 
 const SessionRow = ({ session, fetchSessions }) => {
   const [students, setStudents] = useState([]);
@@ -49,6 +50,92 @@ const SessionRow = ({ session, fetchSessions }) => {
   const date = new Date(session.createdAt).toLocaleDateString();
   const time = new Date(session.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
+  const handleExportXLSX = async () => {
+    if (!students || students.length === 0) {
+      alert("No data available to export for this session.");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Attendance Report');
+
+    // Define Columns
+    worksheet.columns = [
+      { header: 'Registration Number', key: 'regNo', width: 22 },
+      { header: 'Name', key: 'name', width: 28 },
+      { header: 'Course / Topic', key: 'courseTopic', width: 35 },
+      { header: 'Branch', key: 'branch', width: 15 },
+      { header: 'Semester', key: 'semester', width: 10 },
+      { header: 'Program', key: 'program', width: 15 },
+      { header: 'Date', key: 'date', width: 15 },
+      { header: 'Time', key: 'time', width: 12 },
+      { header: 'Status', key: 'status', width: 15 }
+    ];
+
+    // Style the Header Row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1E293B' } // Dark blue/gray background
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Add Data Rows
+    students.forEach(record => {
+      const student = record.studentId || {};
+      const markedDate = record.markedAt ? new Date(record.markedAt).toLocaleDateString() : date;
+      const markedTime = record.markedAt ? new Date(record.markedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : time;
+
+      const row = worksheet.addRow({
+        regNo: student.enrollmentId || "N/A",
+        name: student.name || "Unknown",
+        courseTopic: `${session.courseName} - ${session.topic}`,
+        branch: student.branch || (student.department && student.department[0]) || "N/A",
+        semester: student.semester || "N/A",
+        program: (student.program && student.program[0]) || "N/A",
+        date: markedDate,
+        time: markedTime,
+        status: record.status || "Absent"
+      });
+
+      // Apply Conditional Styling to Status Cell (Column 9)
+      const statusCell = row.getCell(9);
+      const nameCell = row.getCell(2);
+      
+      statusCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      
+      if (record.status === 'Present') {
+        statusCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF22C55E' } // Green-500
+        };
+      } else {
+        statusCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFEF4444' } // Red-500
+        };
+        // Also make the student's NAME red for absent students as requested
+        nameCell.font = { color: { argb: 'FFEF4444' }, bold: true };
+      }
+      statusCell.alignment = { horizontal: 'center' };
+    });
+
+    // Generate and Download File
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const fileName = `Attendance_Report_${session.sessionCode}_${date.replace(/\//g, '-')}.xlsx`;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors bg-transparent border-b border-white/5 dark:border-white/5">
       <td className="px-6 py-5 whitespace-nowrap">
@@ -84,25 +171,39 @@ const SessionRow = ({ session, fetchSessions }) => {
         </div>
       </td>
       <td className="px-6 py-3 max-w-[400px]">
-         <div className="flex items-center gap-3 overflow-x-auto pb-3 pt-1 scrollbar-thin scrollbar-thumb-gray-200">
-            {loading ? (
-               <span className="text-xs text-gray-400 dark:text-slate-500">Loading...</span>
-            ) : students.length > 0 ? (
-               students.map(r => (
-                  <div key={r._id} className="flex flex-col gap-1.5 items-center justify-center bg-[#f8fafc] dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-[14px] px-4 py-2.5 min-w-[140px] shrink-0 shadow-sm">
-                     <span className="text-[13px] font-bold text-gray-900 dark:text-white truncate w-full text-center tracking-tight">{r.studentId?.name || "Unknown"}</span>
-                     <div className="flex items-center gap-2.5 mt-0.5">
-                        <span className="text-[10px] font-extrabold text-green-600 bg-green-100/60 border border-green-200 px-2.5 py-1 rounded-md uppercase tracking-wider">Present</span>
-                        <button onClick={() => handleDeleteAttendance(r._id)} className="text-gray-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:bg-red-500/10 transition-colors p-1.5 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
-                           <X className="w-3.5 h-3.5" strokeWidth={3} />
-                        </button>
-                     </div>
-                  </div>
-               ))
-            ) : (
-               <span className="text-[13px] text-gray-400 dark:text-slate-500 font-semibold px-2">No students marked</span>
-            )}
-         </div>
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-3 overflow-x-auto pb-3 pt-1 scrollbar-thin scrollbar-thumb-gray-200">
+                {loading ? (
+                   <span className="text-xs text-gray-400 dark:text-slate-500">Loading...</span>
+                ) : students.length > 0 && students.some(r => r.status === "Present") ? (
+                   students.filter(r => r.status === "Present").map(r => (
+                      <div key={r._id} className="flex flex-col gap-1.5 items-center justify-center bg-[#f8fafc] dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-[14px] px-4 py-2.5 min-w-[140px] shrink-0 shadow-sm">
+                         <span className="text-[13px] font-bold text-gray-900 dark:text-white truncate w-full text-center tracking-tight">{r.studentId?.name || "Unknown"}</span>
+                         <div className="flex items-center gap-2.5 mt-0.5">
+                            <span className="text-[10px] font-extrabold text-green-600 bg-green-100/60 border border-green-200 px-2.5 py-1 rounded-md uppercase tracking-wider">Present</span>
+                            <button onClick={() => handleDeleteAttendance(r._id)} className="text-gray-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:bg-red-500/10 transition-colors p-1.5 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                               <X className="w-3.5 h-3.5" strokeWidth={3} />
+                            </button>
+                         </div>
+                      </div>
+                   ))
+                ) : (
+                   <span className="text-[13px] text-gray-400 dark:text-slate-500 font-semibold px-2">No students marked</span>
+                )}
+             </div>
+
+             {/* XLSX Export Button */}
+             <button 
+                onClick={handleExportXLSX}
+                className="ml-auto flex flex-col items-center gap-1.5 p-3 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-2xl transition-all group shrink-0 border border-transparent hover:border-green-200 dark:hover:border-green-500/20"
+                title="Download XLSX Report"
+             >
+                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <FileText className="w-5 h-5 text-red-500" strokeWidth={2.5} />
+                </div>
+                <span className="text-[9px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-tighter group-hover:text-green-600">Export</span>
+             </button>
+          </div>
       </td>
     </tr>
   )
@@ -168,50 +269,81 @@ const AttendanceList = () => {
   const totalExpected = sessions.reduce((acc, curr) => acc + (curr.totalCount || 60), 0);
   const averageAttendance = totalExpected > 0 ? ((studentsRecorded / totalExpected) * 100).toFixed(1) + "%" : "0%";
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     if (!sessions || sessions.length === 0) {
       alert("No sessions available to generate a report.");
       return;
     }
     
-    const headers = ["Session ID", "Course Name", "Topic", "Date", "Time", "Present Count", "Expected Total", "Attendance Rate"];
-    
-    const csvRows = sessions.map(session => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('All Sessions Summary');
+
+    // Define Columns
+    worksheet.columns = [
+      { header: 'Session ID', key: 'sessionCode', width: 15 },
+      { header: 'Course Name', key: 'courseName', width: 25 },
+      { header: 'Topic', key: 'topic', width: 30 },
+      { header: 'Date', key: 'date', width: 15 },
+      { header: 'Time', key: 'time', width: 12 },
+      { header: 'Present', key: 'present', width: 10 },
+      { header: 'Expected', key: 'total', width: 10 },
+      { header: 'Attendance Rate', key: 'rate', width: 18 }
+    ];
+
+    // Style the Header Row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1E293B' }
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // Add Data Rows
+    sessions.forEach(session => {
       const dateObj = new Date(session.createdAt);
-      const date = !isNaN(dateObj) ? dateObj.toISOString().split('T')[0] : 'N/A';
-      const time = !isNaN(dateObj) ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
+      const sessionDate = !isNaN(dateObj) ? dateObj.toLocaleDateString() : 'N/A';
+      const sessionTime = !isNaN(dateObj) ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
       
       const present = session.presentCount || 0;
-      const total = session.totalCount || 60;
+      const total = session.totalCount || 0;
       const rate = total > 0 ? Math.round((present / total) * 100) : 0;
       
-      const escapeCsv = (str) => `"${String(str).replace(/"/g, '""')}"`;
+      const row = worksheet.addRow({
+        sessionCode: session.sessionCode,
+        courseName: session.courseName,
+        topic: session.topic,
+        date: sessionDate,
+        time: sessionTime,
+        present: present,
+        total: total,
+        rate: `${rate}%`
+      });
+
+      // Apply Conditional Styling to Rate Cell (Column 8)
+      const rateCell = row.getCell(8);
+      rateCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       
-      return [
-        session.sessionCode,
-        escapeCsv(session.courseName),
-        escapeCsv(session.topic),
-        date,
-        time,
-        present,
-        total,
-        `${rate}%`
-      ].join(",");
+      if (rate >= 80) {
+        rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF22C55E' } }; // Green
+      } else if (rate >= 50) {
+        rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF97316' } }; // Orange
+      } else {
+        rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEF4444' } }; // Red
+      }
+      rateCell.alignment = { horizontal: 'center' };
     });
-    
-    const csvContent = [headers.join(","), ...csvRows].join("\n");
-    
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute("href", url);
-    const safeDateString = new Date().toISOString().split('T')[0];
-    link.setAttribute("download", `Faculty_Attendance_Report_${safeDateString}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const today = new Date().toISOString().split('T')[0];
+    a.download = `Faculty_Master_Attendance_Report_${today}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -261,11 +393,12 @@ const AttendanceList = () => {
                  <div className="w-[52px] h-[52px] rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0 shadow-inner">
                    <FileText className="w-6 h-6 text-indigo-500" strokeWidth={2.5}/>
                  </div>
-                 <div className="w-full">
-                    <button onClick={handleGenerateReport} className="w-full py-2 bg-white/50 dark:bg-slate-800/50 border-2 border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 hover:border-indigo-200 text-[13px] font-bold rounded-xl transition-colors">
-                        Generate Report
-                    </button>
-                 </div>
+                  <div className="w-full">
+                     <button onClick={handleGenerateReport} className="w-full py-2 bg-gradient-to-br from-indigo-500 to-blue-600 dark:from-indigo-600 dark:to-blue-700 text-white shadow-[0_4px_12px_rgba(79,70,229,0.3)] hover:shadow-[0_6px_16px_rgba(79,70,229,0.4)] border-none text-[13px] font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+                         <FileSpreadsheet className="w-4 h-4" />
+                         Master Report
+                     </button>
+                  </div>
               </div>
             </div>
 
@@ -303,9 +436,9 @@ const AttendanceList = () => {
                     <Trash2 className="w-[18px] h-[18px]" strokeWidth={2.5} />
                     <span>Delete All</span>
                   </button>
-                  <button onClick={handleGenerateReport} className="w-full sm:w-auto flex items-center justify-center shrink-0 gap-2.5 px-6 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-800/50 text-gray-800 dark:text-slate-200 rounded-[14px] text-[13.5px] font-bold transition-all shadow-sm">
-                    <Download className="w-[18px] h-[18px]" strokeWidth={2.5} />
-                    <span>Export All CSV</span>
+                  <button onClick={handleGenerateReport} className="w-full sm:w-auto flex items-center justify-center shrink-0 gap-2.5 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-none rounded-[14px] text-[13.5px] font-bold transition-all shadow-lg hover:shadow-green-500/25 active:scale-95">
+                    <FileSpreadsheet className="w-[18px] h-[18px]" strokeWidth={2.5} />
+                    <span>Export All XLSX</span>
                   </button>
                 </div>
               </div>

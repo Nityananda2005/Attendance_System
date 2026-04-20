@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
     "axios": "^1.14.0",
+    "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^1.7.0",
@@ -20,7 +21,8 @@
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.14.0",
     "recharts": "^3.8.1",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

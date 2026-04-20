@@ -12,6 +12,7 @@ import MarkAttendance from './pages/student/MarkAttendance'
 import History from './pages/student/History'
 import Profile from './pages/student/Profile'
 import Leaderboard from './pages/student/Leaderboard'
+import StudentLeaves from './pages/student/Leaves'
 import FacultyDashboard from './pages/faculty/FacultyDashboard'
 import CreateSession from './pages/faculty/CreateSession'
 import AttendanceList from './pages/faculty/AttendanceList'
@@ -46,6 +47,7 @@ const App = () => {
           <Route path="/profile" element={<ProtectedRoute allowedRole="student"><Profile /></ProtectedRoute>} />
 
           <Route path="/leaderboard" element={<ProtectedRoute allowedRole="student"><Leaderboard /></ProtectedRoute>} />
+          <Route path="/student/leaves" element={<ProtectedRoute allowedRole="student"><StudentLeaves /></ProtectedRoute>} />
 
           {/* Faculty Protected Routes */}
           <Route path="/faculty-dashboard" element={<ProtectedRoute allowedRole="faculty"><FacultyDashboard /></ProtectedRoute>} />

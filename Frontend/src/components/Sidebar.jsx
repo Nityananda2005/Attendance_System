@@ -6,7 +6,8 @@ import {
   History, 
   User, 
   LogOut,
-  Trophy
+  Trophy,
+  CalendarDays
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -62,6 +63,10 @@ const Sidebar = () => {
         <Link to="/leaderboard" className={getLinkClasses('/leaderboard')}>
           <Trophy className="w-[18px] h-[18px] shrink-0" strokeWidth={2.5} />
           Leaderboard
+        </Link>
+        <Link to="/student/leaves" className={getLinkClasses('/student/leaves')}>
+          <CalendarDays className="w-[18px] h-[18px] shrink-0" strokeWidth={2.5} />
+          Leave
         </Link>
         <Link to="/profile" className={getLinkClasses('/profile')}>
           <User className="w-[18px] h-[18px] shrink-0" strokeWidth={2.5} />

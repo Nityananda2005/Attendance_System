@@ -135,16 +135,58 @@ export const markAttendance = async (req, res) => {
   }
 };
 
-// @desc    Get attendance records for a specific session
+// @desc    Get attendance records for a specific session (Unified: Present + Absent)
 // @route   GET /api/attendance/session/:sessionId
 // @access  Private/Faculty
 export const getSessionAttendance = async (req, res) => {
   try {
+    const session = await Session.findById(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    // 1. Get all students who marked attendance (Present)
     const attendanceRecords = await Attendance.find({ sessionId: req.params.sessionId })
-      .populate("studentId", "name email enrollmentId")
+      .populate("studentId", "name email enrollmentId department semester program branch batch batchSection")
       .sort({ markedAt: -1 });
 
-    res.json(attendanceRecords);
+    // 2. Identify all "Expected" students
+    // Fetching all students to ensure fuzzy-matched students are not missed by strict DB filters.
+    // For a single session export, this is acceptable performance-wise.
+    const allCandidateStudents = await User.find({ role: "student" })
+      .select("name email enrollmentId department semester program branch batch batchSection additionalCourses");
+
+    // Filter using the official fuzzy matcher logic (handles branch names, acronyms, and semester variations)
+    const expectedStudents = allCandidateStudents.filter(student => isMatchingSession(student, session));
+
+    // 3. Merge into a unified report list
+    const presentStudentIds = new Set(attendanceRecords.map(r => r.studentId?._id?.toString()).filter(Boolean));
+    
+    // Convert present records to a common format
+    const reportData = attendanceRecords.map(record => ({
+      _id: record._id,
+      studentId: record.studentId,
+      status: "Present",
+      markedAt: record.createdAt,
+    }));
+
+    // Add absent students
+    expectedStudents.forEach(student => {
+      const sId = student._id.toString();
+      if (!presentStudentIds.has(sId)) {
+        reportData.push({
+          _id: `absent_${sId}`,
+          studentId: student,
+          status: "Absent",
+          markedAt: null,
+        });
+      }
+    });
+
+    // Sort by name for easier reading in XLSX
+    reportData.sort((a, b) => (a.studentId?.name || "").localeCompare(b.studentId?.name || ""));
+
+    res.json(reportData);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

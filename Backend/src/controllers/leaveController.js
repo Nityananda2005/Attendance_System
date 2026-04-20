@@ -12,7 +12,7 @@ export const applyLeave = async (req, res) => {
 
   try {
     const leave = await Leave.create({
-      facultyId: req.user._id,
+      userId: req.user._id,
       startDate,
       endDate,
       type,
@@ -21,11 +21,12 @@ export const applyLeave = async (req, res) => {
     });
 
     // Notify all Admins
+    const userRoleLabel = req.user.role === 'student' ? 'Student' : 'Faculty';
     sendRoleNotification("admin", {
       type: "NEW_LEAVE_REQUEST",
-      message: `${req.user.name} has submitted a new leave request.`,
+      message: `${userRoleLabel} ${req.user.name} has submitted a new leave request.`,
       leaveId: leave._id,
-      facultyName: req.user.name
+      applicantName: req.user.name
     });
 
     res.status(201).json({
@@ -44,7 +45,7 @@ export const applyLeave = async (req, res) => {
  */
 export const getMyLeaves = async (req, res) => {
   try {
-    const leaves = await Leave.find({ facultyId: req.user._id }).sort({ createdAt: -1 });
+    const leaves = await Leave.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.json(leaves);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -59,7 +60,7 @@ export const getMyLeaves = async (req, res) => {
 export const getAllLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find({})
-      .populate("facultyId", "name email department")
+      .populate("userId", "name email role department semester branch program")
       .sort({ createdAt: -1 });
     res.json(leaves);
   } catch (error) {
@@ -76,7 +77,7 @@ export const updateLeaveStatus = async (req, res) => {
   const { status, adminComment } = req.body;
 
   try {
-    const leave = await Leave.findById(req.params.id).populate("facultyId", "name");
+    const leave = await Leave.findById(req.params.id).populate("userId", "name role");
 
     if (!leave) {
       return res.status(404).json({ message: "Leave request not found" });
@@ -86,8 +87,8 @@ export const updateLeaveStatus = async (req, res) => {
     leave.adminComment = adminComment || leave.adminComment;
     await leave.save();
 
-    // Notify the specific Faculty
-    sendIndividualNotification(leave.facultyId._id, {
+    // Notify the specific Applicant (Student or Faculty)
+    sendIndividualNotification(leave.userId._id, {
       type: "LEAVE_STATUS_UPDATED",
       message: `Your leave request has been ${status}.`,
       status: status,
@@ -117,16 +118,16 @@ export const deleteLeave = async (req, res) => {
     }
 
     // Authorization: Must be owner OR admin
-    const isOwner = leave.facultyId.toString() === req.user._id.toString();
+    const isOwner = leave.userId.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ message: "You are not authorized to delete this record" });
     }
 
-    // Faculty can only delete if it's still pending
+    // Applicants can only delete if it's still pending
     if (!isAdmin && leave.status !== 'pending') {
-      return res.status(400).json({ message: "Processed leaves cannot be deleted by faculty" });
+      return res.status(400).json({ message: "Processed leaves cannot be deleted" });
     }
 
     await leave.deleteOne();
@@ -144,7 +145,7 @@ export const deleteLeave = async (req, res) => {
  */
 export const deleteAllMyLeaves = async (req, res) => {
   try {
-    const result = await Leave.deleteMany({ facultyId: req.user._id, status: 'pending' });
+    const result = await Leave.deleteMany({ userId: req.user._id, status: 'pending' });
     res.json({ message: `Successfully cancelled ${result.deletedCount} pending leave requests.` });
   } catch (error) {
     res.status(500).json({ message: error.message });

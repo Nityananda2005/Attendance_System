@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { Bell, Sun, Moon, MapPin, LayoutDashboard, QrCode, Clock, User, Trophy, X } from 'lucide-react';
+import { Bell, Sun, Moon, MapPin, LayoutDashboard, QrCode, Clock, User, Trophy, X, CalendarDays } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../api/axios';
 import { getCurrentCoordinates, getGeolocationErrorMessage } from '../utils/geolocation';
@@ -374,7 +374,7 @@ const StudentLayout = ({ children, title }) => {
             { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
             { to: '/leaderboard', icon: Trophy, label: 'Rank' },
             { to: '/mark-attendance', icon: QrCode, label: 'Attend' },
-            { to: '/history', icon: Clock, label: 'Log' },
+            { to: '/student/leaves', icon: CalendarDays, label: 'Leave' },
             { to: '/profile', icon: User, label: 'Profile' }
           ]} 
         />
